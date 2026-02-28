@@ -1,0 +1,10 @@
+---
+layout: docs
+published: true
+---
+= Frontmatter Sample
+:page-permalink: /sample/frontmatter
+:page-nav_order: 9
+:page-title: Frontmatter Sample Page
+
+A small AsciiDoc sample for frontmatter extraction tests.

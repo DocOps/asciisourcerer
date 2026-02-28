@@ -1,0 +1,3 @@
+title: !liquid "{{ release.name }}"
+nested:
+  path: !erb "<%= File.join('a', 'b') %>"

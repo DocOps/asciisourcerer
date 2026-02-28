@@ -1,0 +1,42 @@
+# DocOps Lab RuboCop Configuration
+
+inherit_from: .vendor/docopslab/rubocop.yml
+
+# Project-specific overrides
+
+Style/ArgumentsForwarding:
+  Exclude:
+    - lib/sourcerer.rb
+
+Style/OptionalBooleanParameter:
+  Exclude:
+    - lib/sourcerer/jekyll/liquid/filters.rb
+
+Metrics/ModuleLength:
+  Exclude:
+    - lib/sourcerer/asciidoc.rb
+    - lib/sourcerer/mark_down_grade.rb
+    - lib/sourcerer/rendering.rb
+
+Metrics/ClassLength:
+  Exclude:
+    - lib/sourcerer/mark_down_grade.rb
+
+Metrics/MethodLength:
+  Exclude:
+    - lib/sourcerer/asciidoc.rb
+    - lib/sourcerer/jekyll/monkeypatches.rb
+    - lib/sourcerer/mark_down_grade.rb
+
+RSpec/SpecFilePathFormat:
+  CustomTransform:
+    RuboCop: rubocop
+    RSpec: rspec
+    AsciiDoc: asciidoc
+    PlainTextConverter: plaintext_converter
+
+# Integration test of alias mechanism requires coupled assertions
+# to verify both namespaces work identically as a complete feature
+RSpec/MultipleExpectations:
+  Exclude:
+    - specs/tests/rspec/ascii_sourcerer_alias_spec.rb

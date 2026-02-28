@@ -1,0 +1,449 @@
+---
+basic-yaml-frontmatter: true
+---
+:page-arbitrary-metadata: value
+:page-layout: docs
+:page-topic-type: reference
+:non-page-metadata: other value
+:page-computed-attr: {page-layout}-layout
+= AsciiDoc Kitchen Sink (Original Content)
+Example Author <author@example.invalid>
+:revnumber: 1.0
+:revdate: 2026-02-14
+:toc:
+:toclevels: 3
+:sectnums:
+:icons: font
+:experimental:
+
+[abstract]
+This document is an original “kitchen-sink” sample intended to exercise a wide range of AsciiDoc markup.
+It intentionally includes many edge cases (nesting, continuations, spans, passthroughs, and table features).
+
+== Footnotes
+
+Here is an example footnote.footnote:[This is an original example footnote with no reused prose.]
+
+You can also add an index term. indexterm:[kitchen sink example]
+
+== Paragraphs
+
+.Optional title
+A simple paragraph with an optional title.
+
+Paragraphs can be split across lines
+and still be rendered as a single paragraph.
+
+Paragraphs are separated by a blank line.
+
+Another paragraph that exists mainly to verify that paragraph boundaries are respected.
+
+.A literal paragraph
+ This is a literal paragraph.
+ Literal paragraphs must be indented.
+
+.JavaScript source
+[source,javascript]
+----
+const fact = (n) => (n <= 1 ? 1 : n * fact(n - 1));
+----
+
+Another simple paragraph after a code block.
+
+== Notices
+
+.Paragraph as a NOTE with optional title
+NOTE: This is an example single-paragraph note.
+
+---
+TIP: Tip.
+
+---
+IMPORTANT: Important.
+
+---
+WARNING: Warning.
+
+---
+CAUTION: Caution.
+
+---
+
+== Blocks
+
+.*Listing* block
+----
+Use this for: code or file listings.
+----
+
+---
+
+.*Source* block
+[source,javascript]
+----
+// Use this for: highlighted code listings.
+function add(a, b) {
+  return a + b;
+}
+----
+
+.A Sidebar block
+****
+Use this for sidebar notes.
+Sidebars can be multiple paragraphs.
+
+Second paragraph inside a sidebar.
+****
+
+.*Example* block
+[caption="Example: "]
+==========================
+Use this for examples.
+
+You can override the default caption with a block attribute, as above.
+==========================
+
+---
+
+.*Example* block containing an admonition and a code listing
+[caption="Example: "]
+========
+The next block is a code listing.
+
+[source,python]
+----
+def greet(name):
+    print(f"Hello, {name}!")
+----
+
+[NOTE]
+====
+Some note remarks go here.
+====
+
+========
+
+---
+
+.*A note* admonition block
+[NOTE]
+===============================
+Use this for multi-paragraph notes.
+
+Second paragraph in an admonition block.
+===============================
+
+---
+
+There is a comment below.
+
+////
+// Comment block
+// Use this to hide content from rendered output.
+////
+
+The comment above should not appear in output.
+
+---
+
+++++
+<!-- Passthrough block: backend-specific markup (HTML in this case). -->
+<div class="passthrough-demo">
+  <p><strong>Raw HTML</strong> inside a passthrough block.</p>
+  <ol>
+    <li>One</li>
+    <li>Two</li>
+    <li>Three</li>
+  </ol>
+</div>
+++++
+
+---
+
+.*Literal* block
+....
+Use this when indentation-based literal paragraphs conflict with list parsing.
+
+1. This line looks like an ordered list item,
+2. but in a literal block it stays literal.
+....
+
+---
+
+.*Quote* block
+[quote, "Case Notes", "Collected Observations"]
+____
+A carriage rolled past with a soft rattle of wheels.
+The watcher paused, counted the steps, and wrote down what the sound implied.
+
+"It narrows the options," they said, "not because it proves anything, but because it excludes what cannot be."
+____
+
+---
+
+[NOTE]
+.A NOTE admonition block with nested lists
+=====================================================================
+A paragraph at the top of an admonition block.
+
+. First ordered item
+. Second ordered item
+.. Nested ordered item
+.. Another nested ordered item
+. Third ordered item
+
+* A bulleted list can also appear here.
+** With nesting.
+=====================================================================
+
+---
+
+== Text
+
+You can force +
+a line break.
+
+Text can be normal, _italic_, *bold*, and +mono+.
+
+Quotes can be "double quoted" or 'single quoted'.
+Quotes can be "`double curly quoted`" or '`single curly quoted`'.
+
+Text can be normal, ^superscripted^, and ~subscripted~.
+
+You can use backquotes for commands: `ls -al`.
+
++mono *bold*+ `passthru *bold*`
+
+Path-like text: `/some/path/file.txt`, `.config`
+
+[red]#red text# [yellow-background]#on yellow# [big]#large#
+[red yellow-background big]*all bold*
+
+Mixed and tricky markup:
+n__i__**b**++m++[red]##r##
+
+Special chars: (C) (R) (TM) -- ... -> <- => <= ¶
+
+Escaped:
+\_not italic_, +++_also not italic_+++, t\__e__st, +++t__e__st+++, +++bold+++, $$normal$$
+\¶ \`not single quoted' \`\`not double quoted''
+
+== Links
+
+[[anchor-1]]
+Paragraph or block 1.
+
+anchor:anchor-2[]
+Paragraph or block 2.
+
+Cross references:
+<<anchor-1>>
+xref:anchor-2[]
+xref:anchor-2[Second anchor]
+
+External links:
+link:asciidoc[This document]
+link:asciidoc.html[]
+link:/index.html[This site root]
+http://example.com
+http://example.com[Example Site]
+mailto:root@localhost[email admin]
+
+== Lists
+
+.Bulleted
+* bullet 1
+* bullet 2
+** bullet 2a
+** bullet 2b
+* bullet 3
+** bullet 3a
+*** bullet 3a1
+*** bullet 3a2
+** bullet 3b
+
+---
+
+.Ordered
+. number
+. number
+.. letter
+.. letter
+. number
+.. loweralpha
+.. loweralpha
+... lowerroman
+... lowerroman
+.... upperalpha
+.... upperalpha
+..... upperroman
+..... upperroman
+.... upperalpha
+... lowerroman
+.. loweralpha
+. number
+
+---
+
+.Definition (labeled) lists
+Term 1:: Definition 1
+Term 2:: Definition 2
+Term 2.1;; Definition 2.1
+Term 2.2;; Definition 2.2
+Term 3:: Definition 3
+Term 4:: Definition 4
+Term 4.1::: Definition 4.1
+Term 4.2::: Definition 4.2
+Term 4.2.1:::: Definition 4.2.1
+Term 4.2.2:::: Definition 4.2.2
+Term 4.3::: Definition 4.3
+Term 5:: Definition 5
+
+---
+
+.Labeled 2
+Term 1;; Definition 1
+Term 1.1:: Definition 1.1
+
+---
+
+[horizontal]
+.Labeled horizontal
+Term 1:: Definition 1
+Term 2:: Definition 2
+
+[horizontal]
+Term 2.1;; Definition 2.1
+Term 2.2;; Definition 2.2
+Term 3:: Definition 3
+Term 4:: Definition 4
+
+[horizontal]
+Term 4.1::: Definition 4.1
+Term 4.2::: Definition 4.2
+
+[horizontal]
+Term 4.2.1:::: Definition 4.2.1
+Term 4.2.2:::: Definition 4.2.2
+Term 4.3::: Definition 4.3
+Term 5:: Definition 5
+
+---
+
+[qanda]
+.Q&A
+Question 1:: Answer 1
+Question 2:: Answer 2
+
+---
+
+.Indent is optional
+- bullet
+* another bullet
+1. number
+. again number
+a. letter
+.. again letter
+.. letter
+. number
+* bullet
+- bullet
+
+---
+
+.Break two lists
+. number
+. number
+
+Independent paragraph breaks the list.
+
+. number
+
+.Header break list too
+. number
+--
+. List block defines list boundary too
+. number
+. number
+--
+--
+. number
+. number
+--
+
+---
+
+.Continuation
+- bullet continuation
+. number continuation
+* bullet literal continuation
+.. letter
++
+Non-literal continuation.
++
+----
+Any block can be included in a list.
+----
++
+Last continuation.
+
+---
+
+.List block allow sublist inclusion
+- bullet
++
+--
+- bullet
+* bullet
+--
+* bullet
+- bullet
+. number
+.. letter
++
+--
+. number
+.. letter
+--
+.. letter
+. number
+
+== Tables
+
+.A simple table
+[width="15%"]
+|=======
+|1 |2 |A
+|3 |4 |B
+|5 |6 |C
+|=======
+
+.Table with title, header and footer
+[width="40%",frame="topbot",options="header,footer"]
+|======================
+|Column 1 |Column 2
+|1 |Item 1
+|2 |Item 2
+|3 |Item 3
+|6 |Three items
+|======================
+
+.Columns formatted with strong, monospaced and emphasis styles
+[width="50%",cols=">s,^2m,^2e",frame="topbot",options="header,footer"]
+|==========================
+| 2+|Columns 2 and 3
+|1 |Item 1 |Item 1
+|2 |Item 2 |Item 2
+|3 |Item 3 |Item 3
+|4 |Item 4 |Item 4
+|footer 1|footer 2|footer 3
+|==========================
+
+.A table with CSV data (inline)
+[format="csv",cols="^1,4*2",options="header"]
+|===================================================
+ID,Customer Name,Contact Name,Customer Address,Phone
+1,Acme Stationery,Jordan Lee,"100 Paper St., Suite 3",555-0100
+2,Northwind Grocers,Sam Patel,"42 Market Ave.",555-0111
+3,Helio Labs,Casey Nguyen,"9 Spectrum Rd.",555-0122
+|===================================================

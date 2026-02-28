@@ -1,0 +1,5 @@
+properties:
+  $meta:
+    properties:
+      markup:
+        dflt: "{default_markup}"

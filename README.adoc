@@ -1,0 +1,392 @@
+:page-layout: default
+:page-permalink: /docs
+:page-nav_order: 1
+= AsciiSourcerer
+// tag::ai-prompt[]
+// Collects AsciiDoc content for presenting to a generative AI prompt
+// Other AI-only prompt matter could go here
+// tag::globals[]
+:docopslab_git_www: https://github.com/DocOps
+:this_prod_slug: asciisourcerer
+:asciisourcerer_prod_repo: {docopslab_git_www}/{this_prod_slug}
+:asciisourcerer_prod_repo_files_path: {asciisourcerer_prod_repo}/blob/main
+:this_prod_repo: {asciisourcerer_prod_repo}
+:this_prod_vrsn_major: 0
+:this_prod_vrsn_minor: 1
+:this_prod_vrsn_major-minor: {this_prod_vrsn_major}.{this_prod_vrsn_minor}
+:this_prod_vrsn_patch: 0
+:this_prod_vrsn: {this_prod_vrsn_major-minor}.{this_prod_vrsn_patch}
+:next_prod_vrsn: 0.2.0
+// Default configuration values - single source of truth for config-def.yml
+:this_prod_repo_branch: {this_prod_repo}/tree/release/{this_prod_vrsn_major-minor}
+ifdef::env-github[]
+:docs_extn: .adoc
+:asciisourcerer_www: https://asciisourcerer.docopslab.org
+:asciisourcerer_docs_www: {asciisourcerer_www}/docs
+:default-config_www: {asciisourcerer_docs_www}/sample-config.html
+:this_prod_docs_www: {asciisourcerer_docs_www}
+endif::[]
+ifndef::env-github[]
+:docs_extn: 
+endif::[]
+// end::globals[]
+:toc: macro
+:toclevels: 3
+
+
+AsciiSourcerer is a Ruby library for radical single-sourcing of documentation and product data, primarily from AsciiDoc, YAML, and Liquid templating operations.
+
+[[intro]]
+== Introduction
+
+AsciiSourcerer is an API-first Ruby gem designed to sit upstream of DocOps Lab generators and tooling, letting dependent code extract, reshape, and render data and content consistently across build-time and runtime workflows.
+
+Its end user base is expected to be Ruby developers; for user-friendlier applications with practical applications, see <<integrations>>.
+
+[NOTE]
+The core module is canonically called `Sourcerer` and is usually referred to as such in documentation.
+The module `AsciiSourcerer` serves as an alias to `Sourcerer` in case of namespace conflicts.
+
+[[capabilities]]
+=== Capabilities
+
+The API focuses on a small set of robust primitives that downstream tools can compose.
+
+AsciiDoc extraction::
+Load attributes, transclude tagged snippets, extract tagged regions, and convert documents from AsciiDoc source files.
+
+Tag-aware YAML loading::
+Load YAML files while preserving custom tags and optionally resolving embedded AsciiDoc attributes and Liquid/ERB template syntax.
+
+Templating and rendering::
+Render Liquid or ERB templates against YAML data or AsciiDoc attributes.
+
+Liquid runtime integration::
+Initialize a Jekyll-routed Liquid runtime with DocOps Lab filters and tags, so Jekyll-compatible templates behave predictably.
+
+Build-time generation::
+Generate prebuild artifacts (attributes, snippets, regions) for downstream builds and runtime access.
+
+AsciiDoc-to-manpage conversion::
+Build manpages for apps from the docs.
+
+AsciiDoc-to-Markdown conversion::
+Convert AsciiDoc documents to Markdown for agentic consumption, with a focus on preserving semantic structure and document frontmatter.
+
+All of these operations are meant to be available even before resources like SchemaGraphy and LiquiDoc are loaded.
+Most are best invoked via a <<integrations,downstream API or utility>>, where robust services for _input_ (file read), _output_ (file write), _configuration_, _scripting_, and contextual _enrichment_ may be available via CLI or API.
+
+[[core-concepts]]
+=== Core Concepts
+
+Sourcerer workflows involve some terms of art, which we define here to keep the process consistent across different syntaxes.
+
+single-sourcing::
+Treat AsciiDoc and YAML as authoritative sources so the same data can power documentation, configuration, and build artifacts.
+
+AsciiDoc attributes::
+AsciiDoc attributes are key-value pairs defined in AsciiDoc documents that can be loaded as data and used for templating, configuration, and metadata.
+
+tagged regions::
+Sections of source files demarcated by `tag::` and `end::` markers, which can be extracted as content snippets for reuse in documentation or other outputs.
+
+YAML tags::
+Custom YAML tags (ex: `!liquid`, `!attribute`) that provide special processing instructions during YAML loading.
+Tags are a supported element of the YAML specification but leave handling up to the application, soAsciiSourcerer provides a mechanism for preserving and processing them.
+
+templating engines::
+Liquid and ERB are supported templating engines.
+Sourcerer uses standard Ruby ERB, but for Liquid, the engine is modified by bootstrapping Jekyll's Liquid runtime and enhancing it with Liquid extensions like custom tags and filters.
+
+
+[[usage]]
+== Usage
+
+Sourcerer is a library, so you call it from Ruby code rather than a CLI.
+The most common workflows are summarized below.
+
+Basic render flow::
+Load YAML data, optionally enrich it with AsciiDoc attributes, render a template, and write output to a file.
+
+Prebuild flow::
+Extract attributes and tagged content from AsciiDoc into artifacts that are loaded at runtime.
+
+Converter flow::
+Use a custom converter (callable or constant name) to produce specialized output without embedding converter logic into the core rendering pipeline.
+
+[[quickstart]]
+=== Quickstart
+
+Add `asciisourcerer` to your application using Bundler.
+
+.Gemfile addition
+[source,ruby,subs=+attributes]
+----
+gem 'asciisourcerer', '~> {this_prod_vrsn_major-minor}'
+----
+
+Then require and use it in your Ruby code.
+
+[NOTE]
+Applications can use either the `Sourcerer` (canonical) or `AsciiSourcerer` (permanent alias) module namespace.
+The full `AsciiSourcerer` namespace is recommended if your application also uses the unaffiliated link:https://rubygems.org/search?query=sourcerer[`sourcerer`] gem, which does not appear to be currently maintained.
+
+Primary API namespaces:
+
+* `Sourcerer::AsciiDoc` for attribute loading, includes, tagged-region extraction, and document generation (manpage, HTML, Markdown).
+* `Sourcerer::Yaml` for YAML loading with tag preservation and optional attribute resolution.
+* `Sourcerer::Yaml::TagUtils` for tag helper methods (`detag`, `tag_of`, `tag?`).
+* `Sourcerer::Rendering` for template rendering and output orchestration.
+
+The top-level `Sourcerer.*` methods remain as compatibility delegators.
+This layer is actually *deprecated* and will be removed in AsciiSourcerer 1.0.
+
+.Example: Render a template with YAML data
+[source,ruby]
+----
+require 'asciisourcerer'
+
+Sourcerer::Rendering.render_template(
+	'template.liquid',
+	'data.yml',
+	'output.md',
+	data_object: 'data',
+	engine: 'liquid'
+)
+----
+
+.Example: Generate semantic HTML5 from AsciiDoc
+[source,ruby]
+----
+require 'asciisourcerer'
+
+Sourcerer::AsciiDoc.generate_html(
+	'README.adoc',
+	'build/docs/readme.html',
+	backend: 'asciidoctor-html5s'
+)
+----
+
+If `asciidoctor-html5s` is unavailable at runtime, Sourcerer falls back to the standard `html5` backend.
+
+[[markdown-grade]]
+=== MarkDownGrade (AsciiDoc -> Markdown)
+
+`Sourcerer::MarkDownGrade` handles HTML-to-Markdown adaptation.
+For end-to-end AsciiDoc conversion, use `Sourcerer::AsciiDoc.mark_down_grade`, which orchestrates AsciiDoc rendering and MarkDownGrade conversion.
+
+Core behavior defaults::
+* Preserve section heading anchors.
+* Preserve semantic definition lists (`<dl>`, `<dt>`, `<dd>`).
+* Preserve frontmatter when enabled.
+* Support semantic backend requests with fallback (`asciidoctor-html5s` -> `html5s` or `html5`).
+
+.Example: Convert AsciiDoc file to Markdown with frontmatter
+[source,ruby]
+----
+require 'asciisourcerer'
+
+result = Sourcerer::AsciiDoc.mark_down_grade(
+	'specs/tests/fixtures/frontmatter-sample.adoc',
+	'build/docs/frontmatter-sample.md',
+	html_output_path: 'build/docs/frontmatter-sample.html',
+	backend: 'asciidoctor-html5s',
+	include_frontmatter: true,
+	markdown_options: { github_flavored: true }
+)
+
+puts(result[:used_backend])
+puts(result[:frontmatter].keys)
+----
+
+.Example: Convert HTML fragment to Markdown directly
+[source,ruby]
+----
+require 'asciisourcerer'
+
+html = <<~HTML
+	<h2 id="_sample">Sample</h2>
+	<p>Paragraph.</p>
+HTML
+
+markdown = Sourcerer::MarkDownGrade.convert_html(
+	html,
+	github_flavored: true
+)
+
+puts(markdown)
+----
+
+[[markdown-grade-migration]]
+=== Migration Mini-Guide (DocOps Lab)
+
+For consumers currently using `DocOps/lab/scripts/mark_down_grade.rb`, migrate to Sourcerer in two steps.
+
+Step 1: Switch call sites to `asciisourcerer` API::
+* Replace local script requires with `require 'asciisourcerer'`.
+* Use `Sourcerer::AsciiDoc.mark_down_grade` for `.adoc -> .md` workflows.
+* Use `Sourcerer::MarkDownGrade.convert_html` only when input is already HTML.
+
+Step 2: Verify parity, then remove duplicate script::
+* Compare representative outputs from Lab fixture inputs.
+* Validate anchor, frontmatter, and semantic-block behavior for your workflow.
+* Remove `lab/scripts/mark_down_grade.rb` after parity is confirmed.
+
+Recommended follow-through::
+* Redirect or retire `lab/scripts/README-mark_down_grade.adoc` so AsciiSourcerer remains source-of-truth.
+
+[[templating-and-liquid-runtime]]
+=== Templating and Liquid Runtime
+
+Sourcerer supports Liquid and ERB, but its Liquid support is intentionally aligned with Jekyll’s runtime.
+This keeps template behavior consistent with Jekyll projects while allowing DocOps Lab to register filters and tags.
+
+If you are building a Jekyll-compatible templating pipeline, prefer Liquid.
+If you want a low-friction Ruby template for internal tooling, ERB is available.
+
+[[pipelines]]
+=== Prebuild and Rendering Pipelines
+
+Sourcerer’s rendering pipeline is optimized for build tooling and prebuild steps.
+A typical prebuild might load attributes from `README.adoc`, extract tagged snippets into `build/snippets/`, and render YAML plus Liquid templates into `build/docs/`.
+
+The API is intentionally small.
+Sourcerer focuses on producing artifacts, not managing a broader build lifecycle.
+
+Typical render entry shape::
+Use `Sourcerer::Rendering.render_outputs` with an array of hashes.
+Each hash can describe template rendering or converter-driven output:
+
+* Template entry keys: `:template`, `:data`, `:out`, optional `:key`, `:attrs`, `:engine`
+* Converter entry keys: `:converter`, `:data`, `:out`, plus converter-specific options
+
+.Example: Mixed render pipeline
+[source,ruby]
+----
+Sourcerer::Rendering.render_outputs([
+	{
+		template: 'templates/release-notes.liquid',
+		data: 'data/release.yml',
+		out: 'build/docs/release-notes.md',
+		key: 'release',
+		attrs: 'README.adoc',
+		engine: 'liquid'
+	},
+	{
+		converter: 'MyProject::JsonRenderer',
+		data: 'data/release.yml',
+		out: 'build/api/release.json'
+	}
+])
+----
+
+Downstream filter responsibility::
+Sourcerer ships generic Liquid utility filters only.
+Schema-aware filters (including SGYML-specific classification filters) should be provided by downstream tooling such as SchemaGraphy and/or ReleaseHx.
+
+
+[[integrations]]
+== Integrations (Implemented and Planned)
+
+These notes describe how AsciiSourcerer relates to existing and future downstream tools.
+For most users, these tools are the recommended way to access AsciiSourcerer’s capabilities, since they provide a richer context for configuration, input/output management, and workflow orchestration.
+
+SchemaGraphy::
+SchemaGraphy's API is the schema-aware layer in the DocOps Lab ecosystem.
+Sourcerer provides it with primitives such as YAML loading, templating, and Liquid runtime setup, while SchemaGraphy handles schema validation and templated-field interpretation.
+SchemaGraphy depends on AsciiSourcerer for these primitives, not the other way around.
+
+https://github.com/DocOps/releasehx[ReleaseHx]::
+The ReleaseHx API and `rhx` CLI uses Sourcerer for generating source files during a prebuild stage, and at runtime for YAML ingest and template rendering.
+
+LiquiDoc::
+Secondary to SchemaGraphy, the scriptable template-rendering build utility LiquiDoc will use SchemaGraphy and AsciiSourcerer at runtime.
+
+Jekyll Extensions::
+DocOps Labs maintains plugins, themes, and even a utility for generating technical documentation with the Jekyll static-site generator.
+All the benefits of extended YAML ingest and Liquid processing are available via these extensions, along with and usually through SchemaGraphy.
+
+
+[[development]]
+== Development
+
+This section is for contributors working on AsciiSourcerer itself.
+
+[[scope]]
+=== Scope and Extensibility
+
+Sourcerer is a primitive, upstream dependency and should remain a small, stable base layer.
+It should not become a catch-all framework for schema processing, validation, or domain-specific logic.
+
+Scope conclusions::
+Keep AsciiSourcerer focused on core behaviors needed by downstream tools.
+These include funky AsciiDoc processing (attribute extraction, alternate outputs), enhanced YAML loading (tag handling, template integration), and Jekyll/Liquid runtime support.
+
+Avoid a formal plugin system in the near term::
+Add capabilities directly when needed, but keep changes narrowly scoped and well-documented.
+
+Schema-aware behavior belongs in SchemaGraphy::
+SGYML, JSON Schema validation, and templated-field interpretation should "`wait`" for SchemaGraphy.
+
+Prefer dependency injection over hard coupling::
+Use callables or config hashes for advanced behaviors that must be orchestrated by downstream tools.
+
+The AsciiSourcerer gem is not directly released in a "`Dockerized`" edition since it really is intended only to supply processing to Ruby tools.
+Most user-facing benefits of the processing done here is better accessed via downstream tools.
+
+[[docopslab-dev]]
+=== DocOps Lab Devtool (`docopslab-dev`)
+
+Special developer Rake tasks and libraries are available via the `docopslab-dev` gem.
+
+.List tasks from `docopslab-dev`
+[.prompt]
+ bundle exec rake --tasks | grep labdev:
+
+The link:{docopslab_git_www}/lab/tree/main/gems/docopslab-dev/README.adoc[DocOps Lab Devtool] or see `.agent/docs/topics/docpslab-devtool.md`.
+
+[[api]]
+=== API Design
+
+The API is designed to be stable and backward-compatible, with a clear deprecation path for any breaking changes.
+The top-level `Sourcerer.*` methods are deprecated in favor of direct namespace usage (`Sourcerer::Yaml`, `Sourcerer::AsciiDoc`, `Sourcerer::Rendering`), which will be removed in version 1.0.
+
+Do not add new public methods directly to the `Sourcerer` namespace;
+instead, add them to the appropriate submodule.
+
+Ruby API shape policy::
+Use singleton methods (`def self.*`) on namespace modules for stateless primitives.
+Use classes when behavior is naturally stateful or lifecycle-driven.
+Use mixin modules for host-integration surfaces (for example, Liquid filters/tags) where the host expects instance methods.
+For mixin modules, keep public entrypoints as thin wrappers and place transformation logic in an internal helper module/object.
+
+Visibility policy::
+Use `private_class_method` for singleton helper methods defined with `def self.*`.
+Use `private` for instance helper methods in classes or mixins.
+Avoid exporting helper methods as accidental public API.
+
+[[tests]]
+=== Tests
+
+See the full testing documentation at link:{asciisourcerer_prod_repo_files_path}[`specs/tests/README.adoc`]
+
+Run the RSpec suite:
+
+[.prompt]
+ bundle exec rake rspec
+
+Run YAML loader validation:
+
+[.prompt]
+ bundle exec rake yaml_test
+
+Run the PR/CI test suite:
+
+[.prompt]
+ bundle exec rake pr_test
+
+
+[[legal]]
+== Legal
+
+Sourcerer is licensed under the MIT License.

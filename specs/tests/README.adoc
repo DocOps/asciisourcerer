@@ -1,0 +1,32 @@
+= Tests
+:toc: macro
+:toclevels: 2
+
+This document describes the testing regimen for the AsciiSourcerer gem.
+
+== RSpec
+
+Run the RSpec suite:
+
+[.prompt]
+ bundle exec rake rspec
+
+== YAML Validation
+
+Validate YAML fixtures and loader behavior:
+
+[.prompt]
+ bundle exec rake yaml_test
+
+== PR Test Suite
+
+Run the standard PR/CI test suite:
+
+[.prompt]
+ bundle exec rake pr_test
+
+== Notes
+
+* RSpec files live at `specs/tests/rspec/`.
+* YAML fixtures live at `specs/tests/fixtures/`.
+* Rake tasks are defined in the project `Rakefile`.
