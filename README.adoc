@@ -39,7 +39,7 @@ endif::[]
 :this_prod_vrsn_major: 0
 :this_prod_vrsn_minor: 2
 :this_prod_vrsn_majmin: {this_prod_vrsn_major}.{this_prod_vrsn_minor}
-:this_prod_vrsn_patch: 0
+:this_prod_vrsn_patch: 1
 :this_prod_vrsn: {this_prod_vrsn_majmin}.{this_prod_vrsn_patch}
 :next_prod_vrsn: 0.3.0
 // end::global-settings[]
@@ -482,7 +482,7 @@ Merges a user-supplied list into a default list using `+`/`-` amendment tokens.
 .Require
 [source,ruby]
 ----
-require 'sourcerer/util/list_amendment'
+require 'sourcerer/util/list_amend'
 ----
 
 .API
@@ -723,13 +723,21 @@ Standard release flow:
 
 . Update version in `lib/sourcerer/version.rb` and `README.adoc` attributes.
 
+. Commit to Git.
+
+. Push to GitHub.
+
 . Run `./scripts/build.sh` to validate the environment, run tests, and build the gem file to `pkg/`.
+
+. Tag the release in Git:
++
+[.prompt,subs=+attributes]
+ git tag v{this_prod_vrsn}
+ git push origin v{this_prod_vrsn}
 
 . Publish to RubyGems. 
 +
  RUBYGEMS_API_KEY=<rubygems.org key> ./scripts/publish.sh
-
-. Tag the release in Git: `git tag v<version> && git push origin v<version>`.
 
 [NOTE]
 AsciiSourcerer does not yet publish a release history document.

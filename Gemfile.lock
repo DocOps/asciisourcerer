@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    asciisourcerer (0.2.0)
+    asciisourcerer (0.2.1)
       asciidoctor (~> 2.0)
       asciidoctor-html5s (~> 0.5)
       jekyll (~> 4.4)
