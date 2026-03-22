@@ -6,11 +6,11 @@
 # CLI wrapper for Sourcerer::SourceSkim.
 # Produces structured skims of AsciiDoc source files.
 #
-# Default output: YAML to stdout (symbol keys converted to strings).
-# With -o/--output FILE: pretty-printed JSON written to FILE.
-#
+# Default output: YAML to stdout, JSON to file when -o/--output is given.
+# File extension auto-detection: .json -> JSON, .yml/.yaml -> YAML, no/other extension -> JSON.
+# Override with --yaml or --json
 # Usage:
-#   ruby scripts/skim_asciidoc.rb PATH [--tree] [--flat] [--categories CATS] [-o FILE]
+#   ruby scripts/skim_asciidoc.rb PATH [--tree] [--flat] [--categories CATS] [--json|--yaml] [-o FILE]
 #
 # PATH may be a file, directory (traversed recursively for *.adoc), or a glob pattern.
 #
@@ -31,7 +31,7 @@ require 'sourcerer'
 require 'sourcerer/util/list_amend'
 require 'sourcerer/util/pathifier'
 
-options = { forms: [], output: nil, categories: nil, attributes: {} }
+options = { forms: [], output: nil, categories: nil, attributes: {}, syntax: nil }
 
 default_cats = Sourcerer::SourceSkim::DEFAULT_CATEGORIES.map(&:to_s)
 
@@ -53,13 +53,19 @@ parser = OptionParser.new do |opts|
     "Default: #{default_cats.join(',')}") do |spec|
     options[:categories] = spec
   end
+  opts.on('--json', 'Force JSON output (overrides default YAML-to-stdout)') do
+    options[:syntax] = :json
+  end
+  opts.on('--yaml', 'Force YAML output (overrides default JSON-to-file)') do
+    options[:syntax] = :yaml
+  end
   opts.on(
     '-a', '--attribute KEY=VALUE',
     'Set an Asciidoctor attribute (repeatable), e.g. -a env=prod') do |pair|
     key, value = pair.split('=', 2)
     options[:attributes][key] = value || ''
   end
-  opts.on('-o', '--output FILE', 'Write JSON to FILE; omit for YAML to stdout') do |file|
+  opts.on('-o', '--output FILE', 'Write output to FILE; format auto-detected from extension (.json/.yml/.yaml)') do |file|
     options[:output] = file
   end
   opts.on('-h', '--help', 'Show this help') do
@@ -107,9 +113,27 @@ end
 # Convert symbol keys to strings for portable output in both formats.
 portable = JSON.parse(JSON.generate(results))
 
+ext = File.extname(options[:output].to_s).downcase
+ext_syntax = case ext
+             when '.json'        then :json
+             when '.yml', '.yaml' then :yaml
+             end
+
+if options[:syntax] && ext_syntax && options[:syntax] != ext_syntax
+  if options[:syntax] == :yaml
+    warn "Error: --yaml conflicts with #{ext} output file (YAML is not valid JSON)."
+    exit 1
+  else
+    warn "Warning: writing JSON to a #{ext} file (JSON is valid YAML, but consider .json extension)."
+  end
+end
+
+syntax = options[:syntax] || ext_syntax || (options[:output] ? :json : :yaml)
+
 if options[:output]
-  File.write(options[:output], JSON.pretty_generate(portable))
+  content = syntax == :yaml ? portable.to_yaml : JSON.pretty_generate(portable)
+  File.write(options[:output], content)
   warn "Skimmed #{file_paths.size} file(s) written to #{options[:output]}"
 else
-  puts portable.to_yaml
+  puts(syntax == :json ? JSON.pretty_generate(portable) : portable.to_yaml)
 end

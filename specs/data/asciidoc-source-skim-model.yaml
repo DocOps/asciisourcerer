@@ -128,3 +128,5 @@ install.adoc: # Actual source filename
       alt: A graph showing something unimportant and goofy
       starts_at: 180
       section_id: important-figures
+# Pattern repeats for each source document in a flat mapping of
+#  source path to its extracted content and metadata.
