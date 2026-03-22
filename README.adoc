@@ -545,15 +545,15 @@ result = Sourcerer::Util::Pathifier.match(input, recursive: true, include_dirs: 
 ----
 
 Classification rules::
-  `:file`:::    `File.file?(input)` is true.
-  `:dir`:::     `File.directory?(input)` is true.
-  `:glob`:::    Input contains glob metacharacters (`* ? [ ] { }`).
-  `:missing`::: None of the above.
+`:file`:::    `File.file?(input)` is true.
+`:dir`:::     `File.directory?(input)` is true.
+`:glob`:::    Input contains glob metacharacters (`* ? [ ] { }`).
+`:missing`::: None of the above.
 
 Options::
-  `recursive`:::       Traverse directories recursively via `Find.find` (default: `true`).
-  `include_dirs`:::    Also yield directory paths during traversal (default: `false`).
-  `follow_symlinks`::: Follow symlink directories during recursion (default: `false`).
+`recursive`:::       Traverse directories recursively via `Find.find` (default: `true`).
+`include_dirs`:::    Also yield directory paths during traversal (default: `false`).
+`follow_symlinks`::: Follow symlink directories during recursion (default: `false`).
 
 .Examples
 [source,ruby]
@@ -669,18 +669,24 @@ The link:{docopslab_src_www_url}/lab/tree/main/gems/docopslab-dev/README.adoc[Do
 === API Design
 
 The API is designed to be stable and backward-compatible, with a clear deprecation path for any breaking changes.
-The top-level `Sourcerer.*` methods are deprecated in favor of direct namespace usage (`Sourcerer::Yaml`, `Sourcerer::AsciiDoc`, `Sourcerer::Rendering`, `Sourcerer::Sync`), which will be removed in version 1.0.
+The top-level `Sourcerer.*` methods are deprecated in favor of direct namespace usage (`Sourcerer::Yaml`, `Sourcerer::AsciiDoc`, `Sourcerer::Rendering`), which will be removed in version 1.0.
 
 Do not add new public methods directly to the `Sourcerer` namespace;
 instead, add them to the appropriate submodule.
 
-Ruby API shape policy::
-Use singleton methods (`def self.*`) on namespace modules for stateless primitives.
-Use classes when behavior is naturally stateful or lifecycle-driven.
-Use mixin modules for host-integration surfaces (for example, Liquid filters/tags) where the host expects instance methods.
-For mixin modules, keep public entrypoints as thin wrappers and place transformation logic in an internal helper module/object.
+[[api-shape-policy]]
+==== Ruby API shape policy
 
-Visibility policy::
+Use singleton methods (`def self.*`) on namespace modules for stateless primitives.
+
+Use classes when behavior is naturally stateful or lifecycle-driven.
+
+Use mixin modules for host-integration surfaces (for example, Liquid filters/tags) where the host expects instance methods.
+Keep public entrypoints as thin wrappers and place transformation logic in an internal helper module/object.
+
+[[visibility-policy]]
+==== Visibility policy
+
 Use `private_class_method` for singleton helper methods defined with `def self.*`.
 Use `private` for instance helper methods in classes or mixins.
 Avoid exporting helper methods as accidental public API.
@@ -704,6 +710,29 @@ Run the PR/CI test suite:
 
 [.prompt]
  bundle exec rake pr_test
+
+[[release-process]]
+=== Release Process and History
+
+AsciiSourcerer is intended to be the most primal gem in the DocOps Lab pool.
+As such, its development is less formal.
+
+Each release is tested against all downstream gems and tools, but we are somewhat less formal about issue tracking and development branch management, at least in early stages.
+
+Standard release flow:
+
+. Update version in `lib/sourcerer/version.rb` and `README.adoc` attributes.
+
+. Run `./scripts/build.sh` to validate the environment, run tests, and build the gem file to `pkg/`.
+
+. Publish to RubyGems. 
++
+ RUBYGEMS_API_KEY=<rubygems.org key> ./scripts/publish.sh
+
+. Tag the release in Git: `git tag v<version> && git push origin v<version>`.
+
+[NOTE]
+AsciiSourcerer does not yet publish a release history document.
 
 
 [[legal]]
