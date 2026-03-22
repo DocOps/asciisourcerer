@@ -50,6 +50,7 @@ endif::[]
 
 AsciiSourcerer is a Ruby library for radical single-sourcing of documentation and product data, primarily from AsciiDoc, YAML, and Liquid templating operations.
 
+
 [[intro]]
 == Introduction
 
@@ -332,7 +333,8 @@ The `result.diff` file contains the rendered content (`init`) or a unified diff 
 [NOTE]
 ====
 If a canonical block is absent from a target file, `sync` emits a warning.
-That warning is suppressed when the target contains a non-canonical tag sharing the same suffix — for example, `local-intro` alongside canonical `universal-intro` — indicating a deliberate project-local override.
+That warning is suppressed when the target contains a non-canonical tag sharing the same suffix indicating a deliberate project-local override.
+Example: `local-intro` alongside canonical `universal-intro.
 ====
 
 [[sync-cast-liquid]]
@@ -370,7 +372,7 @@ Pass `dry_run: true` to return the rendered content in `result.diff` without wri
 [[templating-liquid-runtime]]
 === Templating and Liquid Runtime
 
-Sourcerer supports Liquid and ERB, but its Liquid support is intentionally aligned with Jekyll’s runtime.
+Sourcerer supports Liquid and ERB, but its Liquid support is intentionally aligned with Jekyll's runtime.
 This keeps template behavior consistent with Jekyll projects while allowing DocOps Lab to register filters and tags.
 
 If you are building a Jekyll-compatible templating pipeline, prefer Liquid.
@@ -379,7 +381,7 @@ If you want a low-friction Ruby template for internal tooling, ERB is available.
 [[pipelines]]
 === Prebuild and Rendering Pipelines
 
-Sourcerer’s rendering pipeline is optimized for build tooling and prebuild steps.
+Sourcerer's rendering pipeline is optimized for build tooling and prebuild steps.
 A typical prebuild might load attributes from `README.adoc`, extract tagged snippets into `build/snippets/`, and render YAML plus Liquid templates into `build/docs/`.
 
 The API is intentionally small.
@@ -584,7 +586,7 @@ r.enum.to_a  # => []
 == Integrations (Implemented and Planned)
 
 These notes describe how AsciiSourcerer relates to existing and future downstream tools.
-For most users, these tools are the recommended way to access AsciiSourcerer’s capabilities, since they provide a richer context for configuration, input/output management, and workflow orchestration.
+For most users, these tools are the recommended way to access AsciiSourcerer's capabilities, since they provide a richer context for configuration, input/output management, and workflow orchestration.
 
 https://github.com/DocOps/lab/tree/main/gems/docopslab-dev[docopslab-dev]::
 A harness for DocOps Lab developer tasks and operations.
