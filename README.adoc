@@ -1,38 +1,52 @@
-:page-layout: default
-:page-permalink: /docs
-:page-nav_order: 1
 = AsciiSourcerer
 // tag::ai-prompt[]
 // Collects AsciiDoc content for presenting to a generative AI prompt
 // Other AI-only prompt matter could go here
-// tag::globals[]
-:docopslab_git_www: https://github.com/DocOps
-:this_prod_slug: asciisourcerer
-:asciisourcerer_prod_repo: {docopslab_git_www}/{this_prod_slug}
-:asciisourcerer_prod_repo_files_path: {asciisourcerer_prod_repo}/blob/main
-:this_prod_repo: {asciisourcerer_prod_repo}
-:this_prod_vrsn_major: 0
-:this_prod_vrsn_minor: 1
-:this_prod_vrsn_major-minor: {this_prod_vrsn_major}.{this_prod_vrsn_minor}
-:this_prod_vrsn_patch: 0
-:this_prod_vrsn: {this_prod_vrsn_major-minor}.{this_prod_vrsn_patch}
-:next_prod_vrsn: 0.2.0
-// Default configuration values - single source of truth for config-def.yml
-:this_prod_repo_branch: {this_prod_repo}/tree/release/{this_prod_vrsn_major-minor}
+// tag::global-settings[]
+:this_proj_slug: asciisourcerer
+:this_proj_name: AsciiSourcerer
+// tag::universal-settings[]
+// ALL changes within this block must be made in prime template:
+//  DocOps/lab/gems/docopslab-dev/templates/README.asciidoc
+:docopslab_src_www_url: https://github.com/DocOps
+:docopslab_domain: docopslab.org
+:docopslab_www_url: https://{docopslab_domain}
+:docopslab_io_www_url: https://docopslab.github.io
+:docopslab_ruby_version: 3.2.7
+:docopslab_src_www_url: https://raw.githubusercontent.com/DocOps
+:docopslab_git_src_uri: git@github.com:DocOps
+:this_proj_src_www_url: {docopslab_src_www_url}/{this_proj_slug}
+:this_proj_src_raw_url: https://raw.githubusercontent.com/DocOps/{this_proj_slug}/main
+:this_proj_src_main_files_url: {this_proj_src_www_url}/blob/main
+:this_proj_src_git_uri: {docopslab_git_src_uri}/{this_proj_slug}.git
+:this_proj_ruby_version: {docopslab_ruby_version}
+// tag::env-settings[]
+:docs_extn:
 ifdef::env-github[]
 :docs_extn: .adoc
-:asciisourcerer_www: https://asciisourcerer.docopslab.org
-:asciisourcerer_docs_www: {asciisourcerer_www}/docs
-:default-config_www: {asciisourcerer_docs_www}/sample-config.html
-:this_prod_docs_www: {asciisourcerer_docs_www}
+:icons: font
+:caution-caption: :fire:
+:important-caption: :exclamation:
+:note-caption: :paperclip:
+:tip-caption: :bulb:
+:warning-caption: :warning:
 endif::[]
-ifndef::env-github[]
-:docs_extn: 
-endif::[]
-// end::globals[]
+// end::env-settings[]
+// Settings likely to be overridden locally
+:this_prod_slug: {this_proj_slug}
+:this_prod_name: {this_proj_name}
+// end::universal-settings[]
+:this_prod_vrsn_major: 0
+:this_prod_vrsn_minor: 2
+:this_prod_vrsn_majmin: {this_prod_vrsn_major}.{this_prod_vrsn_minor}
+:this_prod_vrsn_patch: 0
+:this_prod_vrsn: {this_prod_vrsn_majmin}.{this_prod_vrsn_patch}
+:next_prod_vrsn: 0.3.0
+// end::global-settings[]
 :toc: macro
-:toclevels: 3
-
+:toclevels: 4
+:this_prod_repo_files_path: {this_proj_src_www_url}/tree/main
+:imagesdir: ./specs/docs
 
 AsciiSourcerer is a Ruby library for radical single-sourcing of documentation and product data, primarily from AsciiDoc, YAML, and Liquid templating operations.
 
@@ -47,31 +61,51 @@ Its end user base is expected to be Ruby developers; for user-friendlier applica
 The core module is canonically called `Sourcerer` and is usually referred to as such in documentation.
 The module `AsciiSourcerer` serves as an alias to `Sourcerer` in case of namespace conflicts.
 
+toc::[]
+
 [[capabilities]]
 === Capabilities
 
 The API focuses on a small set of robust primitives that downstream tools can compose.
 
+[qanda]
 AsciiDoc extraction::
 Load attributes, transclude tagged snippets, extract tagged regions, and convert documents from AsciiDoc source files.
 
 Tag-aware YAML loading::
 Load YAML files while preserving custom tags and optionally resolving embedded AsciiDoc attributes and Liquid/ERB template syntax.
 
+Text syncing in source files::
+Synchronise canonical tagged blocks from a prime template into project-local files.
+Supports one-time bootstrapping, ongoing sync, Liquid rendering within managed blocks, and dry-run diffing.
+See <<sync-cast>>.
+
 Templating and rendering::
 Render Liquid or ERB templates against YAML data or AsciiDoc attributes.
 
 Liquid runtime integration::
 Initialize a Jekyll-routed Liquid runtime with DocOps Lab filters and tags, so Jekyll-compatible templates behave predictably.
+See <<templating-liquid-runtime>>.
 
 Build-time generation::
 Generate prebuild artifacts (attributes, snippets, regions) for downstream builds and runtime access.
+See <<pipelines>>.
 
 AsciiDoc-to-manpage conversion::
 Build manpages for apps from the docs.
 
 AsciiDoc-to-Markdown conversion::
 Convert AsciiDoc documents to Markdown for agentic consumption, with a focus on preserving semantic structure and document frontmatter.
+See <<markdowngrade>>.
+
+AsciiDoc source inspection::
+Skim AsciiDoc documents to produce machine-oriented outlines of sections, code blocks, tables, and other semantic elements for tooling and agent consumption.
+See <<source-skim>>.
+
+General-purpose utilities::
+Small, dependency-light primitives for list amendment and path classification/enumeration, available under `Sourcerer::Util`.
+Not required internally; useful for downstream callers and scripts.
+See <<utilities>>.
 
 All of these operations are meant to be available even before resources like SchemaGraphy and LiquiDoc are loaded.
 Most are best invoked via a <<integrations,downstream API or utility>>, where robust services for _input_ (file read), _output_ (file write), _configuration_, _scripting_, and contextual _enrichment_ may be available via CLI or API.
@@ -89,6 +123,7 @@ AsciiDoc attributes are key-value pairs defined in AsciiDoc documents that can b
 
 tagged regions::
 Sections of source files demarcated by `tag::` and `end::` markers, which can be extracted as content snippets for reuse in documentation or other outputs.
+Tagged regions can also be used by <<sync-cast>> to identify content blocks for synchronization across _source_ files.
 
 YAML tags::
 Custom YAML tags (ex: `!liquid`, `!attribute`) that provide special processing instructions during YAML loading.
@@ -114,6 +149,10 @@ Extract attributes and tagged content from AsciiDoc into artifacts that are load
 Converter flow::
 Use a custom converter (callable or constant name) to produce specialized output without embedding converter logic into the core rendering pipeline.
 
+Source inspection flow::
+Skim an AsciiDoc source document to produce a structured, JSON-ready outline of its sections and key block elements for tooling and agents.
+See <<source-skim>>.
+
 [[quickstart]]
 === Quickstart
 
@@ -122,7 +161,7 @@ Add `asciisourcerer` to your application using Bundler.
 .Gemfile addition
 [source,ruby,subs=+attributes]
 ----
-gem 'asciisourcerer', '~> {this_prod_vrsn_major-minor}'
+gem 'asciisourcerer', '~> {this_prod_vrsn_majmin}'
 ----
 
 Then require and use it in your Ruby code.
@@ -137,6 +176,7 @@ Primary API namespaces:
 * `Sourcerer::Yaml` for YAML loading with tag preservation and optional attribute resolution.
 * `Sourcerer::Yaml::TagUtils` for tag helper methods (`detag`, `tag_of`, `tag?`).
 * `Sourcerer::Rendering` for template rendering and output orchestration.
+* `Sourcerer::Sync` for canonical block synchronization (<<sync-cast>>).
 
 The top-level `Sourcerer.*` methods remain as compatibility delegators.
 This layer is actually *deprecated* and will be removed in AsciiSourcerer 1.0.
@@ -169,7 +209,7 @@ Sourcerer::AsciiDoc.generate_html(
 
 If `asciidoctor-html5s` is unavailable at runtime, Sourcerer falls back to the standard `html5` backend.
 
-[[markdown-grade]]
+[[markdowngrade]]
 === MarkDownGrade (AsciiDoc -> Markdown)
 
 `Sourcerer::MarkDownGrade` handles HTML-to-Markdown adaptation.
@@ -217,8 +257,8 @@ markdown = Sourcerer::MarkDownGrade.convert_html(
 puts(markdown)
 ----
 
-[[markdown-grade-migration]]
-=== Migration Mini-Guide (DocOps Lab)
+[[markdowngrade-migration]]
+==== Migration Mini-Guide (DocOps Lab)
 
 For consumers currently using `DocOps/lab/scripts/mark_down_grade.rb`, migrate to Sourcerer in two steps.
 
@@ -235,7 +275,99 @@ Step 2: Verify parity, then remove duplicate script::
 Recommended follow-through::
 * Redirect or retire `lab/scripts/README-mark_down_grade.adoc` so AsciiSourcerer remains source-of-truth.
 
-[[templating-and-liquid-runtime]]
+[[sync-cast]]
+=== Sync/Cast: Canonical Block Synchronization
+
+Sync/Cast keeps a set of _canonical blocks_ consistent across multiple files.
+Here are some feature-specific terms.
+
+prime template::
+A source file containing canonical blocks intended to be synchronised into one or more project-local target files.
+
+target file::
+A project-local file that receives synchronised content from a prime template.
+All content outside canonical blocks is preserved verbatim.
+
+canonical block::
+A tagged region whose content is owned by the synchronization system.
+Identified by a configurable prefix; the default is `universal-`.
+Override it per call with the `canonical_prefix:` keyword argument.
+
+[[sync-cast-tag-syntax]]
+==== Tag syntax
+
+Canonical blocks use AsciiDoc-style `tag::`/`end::` markers embedded inside comments.
+Three comment styles are recognized so the same prime can manage files of any type:
+
+[cols="3m,5m",options="header"]
+|===
+| Style | Example
+| HTML / Markdown comment
+| <!-- tag::universal-intro[] -->
+| AsciiDoc line comment
+| // tag::universal-intro[]
+| Shell / Ruby / YAML comment
+| # tag::universal-intro[]
+|===
+
+The trailing `[]` is optional in all three styles.
+
+A tag whose name begins with the configured prefix (default `universal-`) is treated as canonical and managed by Sync/Cast.
+All other tagged regions in a target file are left entirely alone, and their presence beside a canonical block never triggers a warning.
+
+[[sync-cast-operations]]
+==== Operations
+
+init::
+One-time operation that renders the prime template (the whole file, not just canonical blocks) through Liquid and writes the result as a new target file.
+Use this to bootstrap a repo-local copy of a project template.
+
+sync::
+Ongoing operation that scans for canonical blocks, replaces their content with the prime version (after optional Liquid rendering), and leaves everything else verbatim.
+
+dry_run: true::
+Pass `dry_run: true` to either operation to compute the result without writing any file.
+The `result.diff` file contains the rendered content (`init`) or a unified diff (`sync`).
+
+[NOTE]
+====
+If a canonical block is absent from a target file, `sync` emits a warning.
+That warning is suppressed when the target contains a non-canonical tag sharing the same suffix — for example, `local-intro` alongside canonical `universal-intro` — indicating a deliberate project-local override.
+====
+
+[[sync-cast-liquid]]
+==== Liquid variables in blocks
+
+Pass a plain Ruby `Hash` as `data:` and its top-level keys become Liquid variables inside every canonical block.
+Nested values follow Liquid dot notation.
+
+During `sync`, only canonical block content is rendered.
+During `init`, the entire prime template is rendered.
+Local content in target files is never rendered.
+
+[source,markdown]
+----
+<!-- tag::universal-intro[] -->
+This is {{ data.variables.name }} version {{ data.variables.version }}.
+<!-- end::universal-intro[] -->
+----
+
+[[sync-cast-bootstrap]]
+==== Bootstrap example
+
+[source,ruby]
+----
+Sourcerer::Sync.init(
+  'templates/AGENTS.markdown',
+  'AGENTS.md',
+  data: { 'project' => 'my-gem', 'org' => 'DocOps' }
+)
+----
+
+Parent directories are created automatically.
+Pass `dry_run: true` to return the rendered content in `result.diff` without writing any file.
+
+[[templating-liquid-runtime]]
 === Templating and Liquid Runtime
 
 Sourcerer supports Liquid and ERB, but its Liquid support is intentionally aligned with Jekyll’s runtime.
@@ -284,12 +416,178 @@ Downstream filter responsibility::
 Sourcerer ships generic Liquid utility filters only.
 Schema-aware filters (including SGYML-specific classification filters) should be provided by downstream tooling such as SchemaGraphy and/or ReleaseHx.
 
+[[source-skim]]
+=== SourceSkim
+
+`Sourcerer::SourceSkim` generates machine-oriented _skims_ of AsciiDoc source documents.
+
+A skim is a structured, JSON/YAML-ready outline of selected source elements:
+sections, code blocks, definition lists, tables, images, and more.
+Skims are intended to help tooling and agents inspect documentation source without ingesting full file contents.
+
+.Example: Skim a file for sections and code blocks
+[source,ruby]
+----
+# Tree sections by default
+skim = Sourcerer::SourceSkim.skim_file('docs/install.adoc')
+
+# Both tree and flat section shapes
+skim = Sourcerer::SourceSkim.skim_file('docs/install.adoc', forms: [:tree, :flat])
+
+# Restrict to specific categories
+skim = Sourcerer::SourceSkim.skim_file('docs/install.adoc', categories: [:code_blocks, :tables])
+
+# Skim inline content
+skim = Sourcerer::SourceSkim.skim_string(raw_adoc_content)
+----
+
+Section shapes::
+Pass `forms: [:tree]` (default), `forms: [:flat]`, or both.
+Tree shape preserves nesting; flat shape adds `parent_id` and expresses child section IDs as an array.
+
+Categories::
+Default output includes `attributes_custom`, `definition_lists`, `code_blocks`, `literal_blocks`, `examples`, `sidebars`, `tables`, and `images`.
+Opt-in only (excluded by default): `attributes_builtin`, `admonitions`, `quotes`.
+Pass `categories:` with an explicit array of symbols to restrict or expand output.
+
+Output reference::
+The skim output schema is at `specs/data/asciidoc-source-skim.schema.json` and a YAML model reference at `specs/data/asciidoc-source-skim-model.yaml`.
+
+[[skim-asciidoctor-extension]]
+==== Asciidoctor extension
+`Sourcerer::SourceSkim::TreeProcessorExtension` integrates SourceSkim into Asciidoctor parsing pipelines.
+It stores the result as the `source-skim-result` document attribute and reads `source-skim-forms` and `source-skim-categories` document attributes for per-document configuration.
+
+.Register the extension
+[source,ruby]
+----
+require 'asciidoctor/extensions/source-skim-tree-processor/extension'
+Asciidoctor::Extensions.register Sourcerer::SourceSkim::TreeProcessorExtension
+----
+
+
+[[utilities]]
+=== Utilities
+
+`Sourcerer::Util` hosts small, dependency-light primitives intended for use by downstream callers and scripts.
+They are not required internally; require the appropriate file explicitly when you need it.
+
+Neither utility carries any new runtime dependencies beyond the standard library.
+
+[[util-list-amend]]
+==== `Sourcerer::Util::ListAmend`
+
+Merges a user-supplied list into a default list using `+`/`-` amendment tokens.
+
+.Require
+[source,ruby]
+----
+require 'sourcerer/util/list_amendment'
+----
+
+.API
+[source,ruby]
+----
+Sourcerer::Util::ListAmend.apply(default_list, custom_list, normalize: nil) -> Array<String>
+----
+
+Behavior::
+  `nil` / empty custom:::
+    Returns `default_list` (stringified) unchanged.
+  Fixed-list mode:::
+    If `custom_list` contains *no* tokens starting with `+` or `-`, it fully replaces `default_list`.
+  Amendment mode:::
+    If `custom_list` contains *any* `+`/`-` token:
+    `-slug` removes `slug` from the working set (or no-op if absent). +
+    `+slug` adds `slug` if not already present. +
+    bare `slug` is treated as `+slug`.
+
+`normalize` (optional)::
+  A callable used to compare items during deduplication and removal, for example `->(s) { s.downcase }`.
+
+.Examples
+[source,ruby]
+----
+defaults = %w[a b c]
+
+# nil → unchanged
+Sourcerer::Util::ListAmend.apply(defaults, nil)           # => ["a", "b", "c"]
+
+# fixed list
+Sourcerer::Util::ListAmend.apply(defaults, "b c")         # => ["b", "c"]
+
+# amendment: remove b, add d
+Sourcerer::Util::ListAmend.apply(defaults, "-b +d")       # => ["a", "c", "d"]
+
+# amendment: bare token treated as addition
+Sourcerer::Util::ListAmend.apply(defaults, "-b d")        # => ["a", "c", "d"]
+----
+
+[[util-pathifier]]
+==== `Sourcerer::Util::Pathifier`
+
+Classifies an input string as `:file`, `:dir`, `:glob`, or `:missing` and provides a lazy enumerator of matching paths.
+Directory traversal is enumerator-based to avoid materializing large path arrays.
+
+.Require
+[source,ruby]
+----
+require 'sourcerer/util/path_matcher'
+----
+
+.API
+[source,ruby]
+----
+result = Sourcerer::Util::Pathifier.match(input, recursive: true, include_dirs: false, follow_symlinks: false)
+# result.type  -> :file | :dir | :glob | :missing
+# result.input -> original input string
+# result.enum  -> Enumerator<String> of matching paths
+----
+
+Classification rules::
+  `:file`:::    `File.file?(input)` is true.
+  `:dir`:::     `File.directory?(input)` is true.
+  `:glob`:::    Input contains glob metacharacters (`* ? [ ] { }`).
+  `:missing`::: None of the above.
+
+Options::
+  `recursive`:::       Traverse directories recursively via `Find.find` (default: `true`).
+  `include_dirs`:::    Also yield directory paths during traversal (default: `false`).
+  `follow_symlinks`::: Follow symlink directories during recursion (default: `false`).
+
+.Examples
+[source,ruby]
+----
+# File
+r = Sourcerer::Util::Pathifier.match('docs/install.adoc')
+r.type   # => :file
+r.enum.to_a  # => ["/absolute/path/docs/install.adoc"]
+
+# Directory (lazy recursive)
+r = Sourcerer::Util::Pathifier.match('docs/')
+r.type   # => :dir
+r.enum.select { |p| p.end_with?('.adoc') }  # lazy filter
+
+# Glob
+r = Sourcerer::Util::Pathifier.match('docs/**/*.adoc')
+r.type   # => :glob
+r.enum.to_a  # => all matching files
+
+# Missing
+r = Sourcerer::Util::Pathifier.match('no/such/path')
+r.type   # => :missing
+r.enum.to_a  # => []
+----
+
 
 [[integrations]]
 == Integrations (Implemented and Planned)
 
 These notes describe how AsciiSourcerer relates to existing and future downstream tools.
 For most users, these tools are the recommended way to access AsciiSourcerer’s capabilities, since they provide a richer context for configuration, input/output management, and workflow orchestration.
+
+https://github.com/DocOps/lab/tree/main/gems/docopslab-dev[docopslab-dev]::
+A harness for DocOps Lab developer tasks and operations.
 
 SchemaGraphy::
 SchemaGraphy's API is the schema-aware layer in the DocOps Lab ecosystem.
@@ -305,6 +603,28 @@ Secondary to SchemaGraphy, the scriptable template-rendering build utility Liqui
 Jekyll Extensions::
 DocOps Labs maintains plugins, themes, and even a utility for generating technical documentation with the Jekyll static-site generator.
 All the benefits of extended YAML ingest and Liquid processing are available via these extensions, along with and usually through SchemaGraphy.
+
+[[alpha-scripts]]
+=== Alpha Scripts/CLIs
+
+The AsciiSourcerer repo does host some CLI utilities and scripts that make direct usage of APIs hosted in the `asciisourcerer` gem.
+These are largely prototype utilities that will eventually make it into official DocOps Lab applications with proper I/O surfaces.
+
+[WARNING]
+These scripts are *neither* rigorously tested *nor* officially supported.
+They may be altered, deprecated, or dropped in backward-incompatible ways.
+Use them as examples but do not rely on them in production.
+
+To use such a script, copy it from the repo's `scripts/` directory into your project, then run it with `ruby` or `bundle exec ruby` as appropriate.
+
+Current scripts include::
+`skim_asciidoc.rb`:::
+For AsciiDoc source inspection.
+Generates YAML or JSON versions of `Sourcerer::SourceSkim` output for a given AsciiDoc document or collection of documents.
+
+`mark_down_grade.rb`:::
+For AsciiDoc-to-Markdown conversion.
+This script orchestrates `Sourcerer::AsciiDoc.mark_down_grade` and is a recommended starting point for users needing this functionality without building their own Ruby integration.
 
 
 [[development]]
@@ -343,13 +663,13 @@ Special developer Rake tasks and libraries are available via the `docopslab-dev`
 [.prompt]
  bundle exec rake --tasks | grep labdev:
 
-The link:{docopslab_git_www}/lab/tree/main/gems/docopslab-dev/README.adoc[DocOps Lab Devtool] or see `.agent/docs/topics/docpslab-devtool.md`.
+The link:{docopslab_src_www_url}/lab/tree/main/gems/docopslab-dev/README.adoc[DocOps Lab Devtool] or see `.agent/docs/topics/docpslab-devtool.md`.
 
 [[api]]
 === API Design
 
 The API is designed to be stable and backward-compatible, with a clear deprecation path for any breaking changes.
-The top-level `Sourcerer.*` methods are deprecated in favor of direct namespace usage (`Sourcerer::Yaml`, `Sourcerer::AsciiDoc`, `Sourcerer::Rendering`), which will be removed in version 1.0.
+The top-level `Sourcerer.*` methods are deprecated in favor of direct namespace usage (`Sourcerer::Yaml`, `Sourcerer::AsciiDoc`, `Sourcerer::Rendering`, `Sourcerer::Sync`), which will be removed in version 1.0.
 
 Do not add new public methods directly to the `Sourcerer` namespace;
 instead, add them to the appropriate submodule.
@@ -368,7 +688,7 @@ Avoid exporting helper methods as accidental public API.
 [[tests]]
 === Tests
 
-See the full testing documentation at link:{asciisourcerer_prod_repo_files_path}[`specs/tests/README.adoc`]
+See the full testing documentation at link:{this_prod_repo_files_url}/specs/tests/README.adoc[`specs/tests/README.adoc`]
 
 Run the RSpec suite:
 

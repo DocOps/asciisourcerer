@@ -17,16 +17,32 @@ Metrics/ModuleLength:
     - lib/sourcerer/asciidoc.rb
     - lib/sourcerer/mark_down_grade.rb
     - lib/sourcerer/rendering.rb
+    - lib/sourcerer/sync/block_parser.rb # intentionally full; barely over
 
 Metrics/ClassLength:
   Exclude:
     - lib/sourcerer/mark_down_grade.rb
+    - lib/sourcerer/source_skim/skimmer.rb
+    - lib/sourcerer/sync/cast.rb # no advantage to splitting
 
 Metrics/MethodLength:
   Exclude:
     - lib/sourcerer/asciidoc.rb
     - lib/sourcerer/jekyll/monkeypatches.rb
     - lib/sourcerer/mark_down_grade.rb
+    - lib/sourcerer/source_skim/skimmer.rb
+    # BlockParser.parse is a single-pass parser; extracting sub-steps into private
+    # helpers would obscure the algorithm without reducing real complexity.
+    - lib/sourcerer/sync/block_parser.rb # abstraction would obscure algorithm
+    - lib/sourcerer/sync/cast.rb # splitting adds indirection w/out clarity gains.
+
+Metrics/ParameterLists:
+  Exclude:
+    # BlockParser.parse + Cast.sync/Cast.initialize options are independently 
+    #  documented public API params; grouping into options hash would reduce 
+    #  discoverability.
+    - lib/sourcerer/sync/block_parser.rb
+    - lib/sourcerer/sync/cast.rb
 
 RSpec/SpecFilePathFormat:
   CustomTransform:
@@ -35,8 +51,16 @@ RSpec/SpecFilePathFormat:
     AsciiDoc: asciidoc
     PlainTextConverter: plaintext_converter
 
-# Integration test of alias mechanism requires coupled assertions
-# to verify both namespaces work identically as a complete feature
 RSpec/MultipleExpectations:
+  # Sync specs test stateful operations (file writes, parse results) where
+  #  grouping 2-4 closely related assertions per example aids readability.
+  Max: 4
   Exclude:
+    # Integration test of alias mechanism requires coupled assertions
+    #  to verify both namespaces work identically as a complete feature
     - specs/tests/rspec/ascii_sourcerer_alias_spec.rb
+
+RSpec/ExampleLength:
+  # Sync integration examples require inline heredoc fixtures plus the assertions
+  #  that exercise them; extracting to let blocks rarely improves clarity here.
+  Max: 15

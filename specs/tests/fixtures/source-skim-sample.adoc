@@ -1,0 +1,117 @@
+= SourceSkim Sample Document
+:custom-attr: test-value
+:page-role: reference
+:project-version: 1.0.0
+
+Preamble content before the first section.
+
+[#section-alpha]
+== Section Alpha
+
+Content in Section Alpha.
+
+[#section-alpha-sub]
+=== Section Alpha Sub
+
+Content in alpha sub.
+
+[#section-beta]
+== Section Beta
+
+Content in Section Beta.
+
+.Glossary
+terminology::
+  What something means.
+runtime::
+  When the program executes.
+
+.Hello World in Ruby
+[source,ruby]
+----
+puts "Hello, World!"
+----
+
+.Example Literal Output
+....
+Hello, World!
+....
+
+.Sample Example
+====
+Here is an example block.
+====
+
+.Important Sidebar
+****
+Some sidebar content.
+****
+
+.Feature Matrix
+[cols="1,1", options="header"]
+|===
+| Feature | Status
+
+| Skimming
+| Done
+
+| Extension
+| Done
+|===
+
+.Helpful Tip
+[TIP]
+====
+Here is a helpful tip.
+====
+
+.Words of Wisdom
+[quote, DocOps Lab]
+____
+Documentation first.
+____
+
+.System Diagram
+image::docs/diagram.png[System architecture diagram]
+
+[#section-gamma]
+== Section Gamma
+
+This section contains blocks intentionally excluded from the default skim output.
+
+// Untitled listing block: no title, excluded from code_blocks.
+[source,ruby]
+----
+puts "I have no title"
+----
+
+// Untitled literal block: no title, excluded from literal_blocks.
+....
+Untitled literal, not captured.
+....
+
+// Untitled example: no title, excluded from examples.
+====
+An untitled example block.
+====
+
+// Untitled sidebar: no title, excluded from sidebars.
+****
+An untitled sidebar block.
+****
+
+// Untitled admonition: no title, excluded even when admonitions category active.
+[NOTE]
+An untitled admonition block.
+
+// Quote with no title and no attribution: excluded from quotes.
+[quote]
+____
+A quotation with neither title nor attribution.
+____
+
+// Table with no title and no header row: excluded from tables.
+|===
+| Cell A
+| Cell B
+|===

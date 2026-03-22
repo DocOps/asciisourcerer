@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Publishing script for AsciiSourcerer gem
 
 set -e

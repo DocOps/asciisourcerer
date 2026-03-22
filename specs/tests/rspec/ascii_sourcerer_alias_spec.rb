@@ -44,7 +44,7 @@ RSpec.describe AsciiSourcerer do
       asciisourcerer_attrs = described_class.load_attributes(readme_path)
 
       expect(asciisourcerer_attrs).to eq(sourcerer_attrs)
-      expect(asciisourcerer_attrs['this_prod_vrsn']).to eq('0.1.0')
+      expect(asciisourcerer_attrs['this_prod_vrsn']).to eq('0.2.0')
     end
   end
 

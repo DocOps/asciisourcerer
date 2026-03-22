@@ -30,3 +30,4 @@ AsciiSourcerer::Rendering = Sourcerer::Rendering
 AsciiSourcerer::Builder = Sourcerer::Builder
 AsciiSourcerer::MarkDownGrade = Sourcerer::MarkDownGrade
 AsciiSourcerer::Jekyll = Sourcerer::Jekyll
+AsciiSourcerer::Sync = Sourcerer::Sync

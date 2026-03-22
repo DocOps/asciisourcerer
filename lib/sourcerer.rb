@@ -17,8 +17,11 @@ require_relative 'sourcerer/yaml'
 # Requiring `sourcerer` also makes adjacent public constants (for example,
 # `Sourcerer::Builder`) available to downstream callers.
 module Sourcerer
+  autoload :AttributesFilter, 'sourcerer/attributes_filter'
   autoload :Jekyll, 'sourcerer/jekyll'
   autoload :MarkDownGrade, 'sourcerer/mark_down_grade'
+  autoload :SourceSkim, 'sourcerer/source_skim'
+  autoload :Sync, 'sourcerer/sync'
 
   DEPRECATED_FACADE_METHODS = {
     # DO NOT add new public methods to this surface

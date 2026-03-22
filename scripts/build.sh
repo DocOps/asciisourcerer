@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # Release build script for AsciiSourcerer gem
 
 set -e

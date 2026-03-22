@@ -208,7 +208,8 @@ module Sourcerer
         source_path,
         conversion_source_text,
         backend: selected_backend,
-        header_footer: options[:header_footer])
+        header_footer: options[:header_footer],
+        attributes: options[:attributes])
 
       frontmatter = options[:include_frontmatter] ? extract_frontmatter(source_text, document.attributes) : {}
       html_body = document.convert
@@ -239,7 +240,7 @@ module Sourcerer
 
     # @api private
     def self.normalize_mark_down_grade_options options
-      supported_option_keys = %i[html_output_path backend header_footer include_frontmatter markdown_options]
+      supported_option_keys = %i[html_output_path backend header_footer include_frontmatter markdown_options attributes]
       unknown_option_keys = options.keys - supported_option_keys
       raise ArgumentError, "unknown option(s): #{unknown_option_keys.join(', ')}" unless unknown_option_keys.empty?
 
@@ -248,7 +249,8 @@ module Sourcerer
         backend: options.fetch(:backend, 'asciidoctor-html5s'),
         header_footer: options.fetch(:header_footer, false),
         include_frontmatter: options.fetch(:include_frontmatter, true),
-        markdown_options: options.fetch(:markdown_options, { github_flavored: true })
+        markdown_options: options.fetch(:markdown_options, { github_flavored: true }),
+        attributes: options.fetch(:attributes, {})
       }
     end
 
@@ -375,8 +377,9 @@ module Sourcerer
     # @param source_text [String]
     # @param backend [String]
     # @param header_footer [Boolean]
+    # @param attributes [Hash]
     # @return [Asciidoctor::Document]
-    def self.load_document_for_markdown_grade source_path, source_text, backend:, header_footer:
+    def self.load_document_for_markdown_grade source_path, source_text, backend:, header_footer:, attributes: {}
       expanded_source_path = File.expand_path(source_path)
       Asciidoctor.load(
         source_text,
@@ -385,11 +388,12 @@ module Sourcerer
         backend: backend,
         header_footer: header_footer,
         base_dir: File.dirname(source_path),
-        attributes: {
-          'docfile' => expanded_source_path,
-          'docdir' => File.dirname(expanded_source_path),
-          'docname' => File.basename(source_path, File.extname(source_path))
-        })
+        attributes: attributes.merge(
+          {
+            'docfile' => expanded_source_path,
+                    'docdir' => File.dirname(expanded_source_path),
+                    'docname' => File.basename(source_path, File.extname(source_path))
+          }))
     end
 
     # Extracts commands from listing and literal blocks with a specific role.

@@ -178,6 +178,35 @@ module Sourcerer
       }
       template.render(context, options)
     end
+
+    # Render a Liquid template string directly with a data hash.
+    #
+    # Unlike {.render_template}, this method accepts an in-memory string and
+    # a plain Ruby Hash rather than paths to data files.  Suitable for
+    # rendering individual block content (e.g. in Sync/Cast) without setting
+    # up a full template pipeline.
+    #
+    # Keys in `data` are stringified to satisfy Liquid's string-key contract.
+    # Nested key stringification is shallow; callee is responsible for deeper
+    # transformations if required.
+    #
+    # The Jekyll/Liquid runtime is initialized before rendering so that any
+    # custom filters or tags registered elsewhere in Sourcerer are available.
+    #
+    # @param content [String] Liquid template source.
+    # @param data [Hash] Variables available to the template.
+    # @return [String] Rendered output.
+    def self.render_liquid_string content, data
+      require_relative 'jekyll'
+      require_relative 'jekyll/liquid/filters'
+      require_relative 'jekyll/liquid/tags'
+      require 'liquid' unless defined?(Liquid::Template)
+      Sourcerer::Jekyll.initialize_liquid_runtime
+
+      template = Liquid::Template.parse(content)
+      template.render(data.transform_keys(&:to_s))
+    end
+
     private_class_method :load_render_data,
                          :resolve_converter,
                          :render_erb,

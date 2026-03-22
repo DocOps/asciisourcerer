@@ -1,0 +1,9 @@
+# Sync/Cast Test Prime — AsciiDoc Comment Style
+
+This prime uses AsciiDoc line-comment tag markers.
+
+// tag::universal-intro[]
+Canonical intro paragraph kept in AsciiDoc style.
+// end::universal-intro[]
+
+Local boilerplate.

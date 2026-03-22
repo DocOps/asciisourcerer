@@ -1,0 +1,576 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/DocOps/asciisourcerer/blob/main/specs/data/asciidoc-source-skim.schema.json",
+  "title": "AsciiDoc SourceSkim Map",
+  "description": "Document-keyed map of AsciiDoc source skims.",
+  "type": "object",
+  "patternProperties": {
+    "^.+\\.adoc$": {
+      "$ref": "#/$defs/documentSkim"
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "nullableString": {
+      "type": ["string", "null"]
+    },
+    "stringMap": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string",
+        "minLength": 1
+      },
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "idList": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "includeList": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "sectionTreeNode": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/nullableString",
+          "description": "Non-inferred section ID when available."
+        },
+        "file": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Present only when the node originates from an included file."
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1
+        },
+        "level": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5
+        },
+        "starts_at": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "ends_near": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "sections": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/sectionTreeNode"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "text",
+        "level",
+        "starts_at",
+        "ends_near",
+        "sections"
+      ],
+      "anyOf": [
+        { "required": ["sections_tree"] },
+        { "required": ["sections_flat"] }
+      ],
+      "additionalProperties": false
+    },
+    "sectionFlatNode": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/nullableString",
+          "description": "Non-inferred section ID when available."
+        },
+        "file": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Present only when the node originates from an included file."
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1
+        },
+        "level": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 5
+        },
+        "starts_at": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "ends_near": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "parent_id": {
+          "$ref": "#/$defs/nullableString"
+        },
+        "sections": {
+          "$ref": "#/$defs/idList"
+        }
+      },
+      "required": [
+        "id",
+        "text",
+        "level",
+        "starts_at",
+        "ends_near",
+        "parent_id",
+        "sections"
+      ],
+      "additionalProperties": false
+    },
+    "definitionTerm": {
+      "type": "object",
+      "properties": {
+        "text": {
+          "type": "string",
+          "minLength": 1
+        },
+        "starts_at": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "required": [
+        "text",
+        "starts_at"
+      ],
+      "additionalProperties": false
+    },
+    "definitionList": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/nullableString"
+        },
+        "title": {
+          "$ref": "#/$defs/nullableString"
+        },
+        "file": {
+          "type": "string",
+          "minLength": 1
+        },
+        "role": {
+          "type": "string",
+          "minLength": 1
+        },
+        "starts_at": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "section_id": {
+          "$ref": "#/$defs/nullableString"
+        },
+        "definition_terms": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/definitionTerm"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "starts_at",
+        "section_id",
+        "definition_terms"
+      ],
+      "additionalProperties": false
+    },
+    "codeBlock": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/nullableString"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "file": {
+          "type": "string",
+          "minLength": 1
+        },
+        "starts_at": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "language": {
+          "type": "string",
+          "minLength": 1
+        },
+        "section_id": {
+          "$ref": "#/$defs/nullableString"
+        },
+        "includes": {
+          "$ref": "#/$defs/includeList"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "starts_at",
+        "section_id",
+        "includes"
+      ],
+      "additionalProperties": false
+    },
+    "literalBlock": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/nullableString"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "file": {
+          "type": "string",
+          "minLength": 1
+        },
+        "starts_at": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "section_id": {
+          "$ref": "#/$defs/nullableString"
+        },
+        "includes": {
+          "$ref": "#/$defs/includeList"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "starts_at",
+        "section_id",
+        "includes"
+      ],
+      "additionalProperties": false
+    },
+    "exampleBlock": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/nullableString"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "file": {
+          "type": "string",
+          "minLength": 1
+        },
+        "starts_at": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "section_id": {
+          "$ref": "#/$defs/nullableString"
+        },
+        "includes": {
+          "$ref": "#/$defs/includeList"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "starts_at",
+        "section_id",
+        "includes"
+      ],
+      "additionalProperties": false
+    },
+    "sidebarBlock": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/nullableString"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "file": {
+          "type": "string",
+          "minLength": 1
+        },
+        "starts_at": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "section_id": {
+          "$ref": "#/$defs/nullableString"
+        },
+        "includes": {
+          "$ref": "#/$defs/includeList"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "starts_at",
+        "section_id",
+        "includes"
+      ],
+      "additionalProperties": false
+    },
+    "tableBlock": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/nullableString"
+        },
+        "title": {
+          "$ref": "#/$defs/nullableString"
+        },
+        "file": {
+          "type": "string",
+          "minLength": 1
+        },
+        "starts_at": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "headers": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "section_id": {
+          "$ref": "#/$defs/nullableString"
+        }
+      },
+      "required": [
+        "id",
+        "starts_at",
+        "section_id"
+      ],
+      "anyOf": [
+        { "required": ["title"] },
+        { "required": ["headers"] }
+      ],
+      "additionalProperties": false
+    },
+    "admonitionBlock": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/nullableString"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["NOTE", "TIP", "IMPORTANT", "WARNING", "CAUTION"]
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "file": {
+          "type": "string",
+          "minLength": 1
+        },
+        "starts_at": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "section_id": {
+          "$ref": "#/$defs/nullableString"
+        }
+      },
+      "required": [
+        "id",
+        "type",
+        "title",
+        "starts_at",
+        "section_id"
+      ],
+      "additionalProperties": false
+    },
+    "quoteBlock": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/nullableString"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "file": {
+          "type": "string",
+          "minLength": 1
+        },
+        "starts_at": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "attribution": {
+          "type": "string",
+          "minLength": 1
+        },
+        "section_id": {
+          "$ref": "#/$defs/nullableString"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "starts_at",
+        "section_id"
+      ],
+      "additionalProperties": false
+    },
+    "imageBlock": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/nullableString"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "file": {
+          "type": "string",
+          "minLength": 1
+        },
+        "target": {
+          "type": "string",
+          "minLength": 1
+        },
+        "alt": {
+          "type": "string",
+          "minLength": 1
+        },
+        "starts_at": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "section_id": {
+          "$ref": "#/$defs/nullableString"
+        }
+      },
+      "required": [
+        "id",
+        "target",
+        "alt",
+        "starts_at",
+        "section_id"
+      ],
+      "additionalProperties": false
+    },
+    "documentSkim": {
+      "type": "object",
+      "properties": {
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Document title."
+        },
+        "lines": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Line count of the main file."
+        },
+        "attributes_custom": {
+          "$ref": "#/$defs/stringMap"
+        },
+        "attributes_builtin": {
+          "$ref": "#/$defs/stringMap"
+        },
+        "sections_tree": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/sectionTreeNode"
+          }
+        },
+        "sections_flat": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/sectionFlatNode"
+          }
+        },
+        "definition_lists": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/definitionList"
+          }
+        },
+        "code_blocks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/codeBlock"
+          }
+        },
+        "literal_blocks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/literalBlock"
+          }
+        },
+        "examples": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/exampleBlock"
+          }
+        },
+        "sidebars": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/sidebarBlock"
+          }
+        },
+        "tables": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/tableBlock"
+          }
+        },
+        "admonitions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/admonitionBlock"
+          }
+        },
+        "quotes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/quoteBlock"
+          }
+        },
+        "images": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/imageBlock"
+          }
+        }
+      },
+      "required": [
+        "title",
+        "lines"
+      ],
+      "additionalProperties": false
+    }
+  }
+}
