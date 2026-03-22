@@ -610,23 +610,59 @@ All the benefits of extended YAML ingest and Liquid processing are available via
 === Alpha Scripts/CLIs
 
 The AsciiSourcerer repo does host some CLI utilities and scripts that make direct usage of APIs hosted in the `asciisourcerer` gem.
-These are largely prototype utilities that will eventually make it into official DocOps Lab applications with proper I/O surfaces.
+
+These are largely prototype utilities that may eventually make it into official DocOps Lab applications with proper I/O surfaces.
 
 [WARNING]
 These scripts are *neither* rigorously tested *nor* officially supported.
 They may be altered, deprecated, or dropped in backward-incompatible ways.
-Use them as examples but do not rely on them in production.
+Use them as examples or utilities but do not rely on them in production.
 
-To use such a script, copy it from the repo's `scripts/` directory into your project, then run it with `ruby` or `bundle exec ruby` as appropriate.
+Current scripts include: ::
 
-Current scripts include::
-`skim_asciidoc.rb`:::
+link:https://github.com/DocOps/asciisourcerer/blob/main/scripts/skim_asciidoc.rb[`skim_asciidoc.rb`]:::
 For AsciiDoc source inspection.
 Generates YAML or JSON versions of `Sourcerer::SourceSkim` output for a given AsciiDoc document or collection of documents.
 
-`mark_down_grade.rb`:::
+link:https://github.com/DocOps/asciisourcerer/blob/main/scripts/mark_down_grade.rb[`mark_down_grade.rb`]:::
 For AsciiDoc-to-Markdown conversion.
 This script orchestrates `Sourcerer::AsciiDoc.mark_down_grade` and is a recommended starting point for users needing this functionality without building their own Ruby integration.
+
+To use one of these ad hock CLIs, copy it from the repo's `scripts/` directory into your project, then run it with `ruby` or `bundle exec ruby` as appropriate.
+
+[[usage-example]]
+==== Setup / Usage Example
+
+For these scripts to work, the `asciisourcerer` gem must be available.
+
+. Add `asciisourcerer` to (or create) `Gemfile` in the root of a project repo.
++
+[source,ruby]
+----
+source 'https://rubygems.org'
+gem 'asciisourcerer'
+----
+
+. Install the library and dependencies.
++
+[.prompt]
+ bundle install
+
+For each script you wish to use:
+
+[start=3]
+. Download the script you want.
++
+.Example: writes current GH copy to a local `scripts/` path.
+[.prompt]
+ curl -o scripts/skim_asciidoc.rb https://raw.githubusercontent.com/DocOps/asciisourcerer/refs/heads/main/scripts/skim_asciidoc.rb
++
+Change `-o scripts/` to wherever you wish to save the script locally.
+
+. Run the script.
++
+[.prompt]
+ bundle exec ruby scripts/skim_asciidoc.rb --help
 
 
 [[development]]
