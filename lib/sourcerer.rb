@@ -17,11 +17,18 @@ require_relative 'sourcerer/yaml'
 # Requiring `sourcerer` also makes adjacent public constants (for example,
 # `Sourcerer::Builder`) available to downstream callers.
 module Sourcerer
+  # File extensions recognised as Markdown source files.
+  MARKDOWN_EXTS  = %w[.md .markdown].freeze
+
+  # File extensions recognised as AsciiDoc source files.
+  ASCIIDOC_EXTS  = %w[.adoc .asciidoc .asc .ad].freeze
+
   autoload :AttributesFilter, 'sourcerer/attributes_filter'
-  autoload :Jekyll, 'sourcerer/jekyll'
-  autoload :MarkDownGrade, 'sourcerer/mark_down_grade'
-  autoload :SourceSkim, 'sourcerer/source_skim'
-  autoload :Sync, 'sourcerer/sync'
+  autoload :YamlFrontmatter,     'sourcerer/yaml_frontmatter'
+  autoload :Jekyll,              'sourcerer/jekyll'
+  autoload :MarkDownGrade,       'sourcerer/mark_down_grade'
+  autoload :SourceSkim,          'sourcerer/source_skim'
+  autoload :Sync,                'sourcerer/sync'
 
   DEPRECATED_FACADE_METHODS = {
     # DO NOT add new public methods to this surface

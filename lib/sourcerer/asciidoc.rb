@@ -4,6 +4,7 @@ require 'asciidoctor'
 require 'fileutils'
 require 'yaml'
 require 'cgi'
+require_relative 'yaml_frontmatter'
 
 module Sourcerer
   # AsciiDoc-focused primitives for attribute loading, region extraction,
@@ -35,7 +36,7 @@ module Sourcerer
   #
   # @see https://asciidoctor.org/ Asciidoctor Documentation
   module AsciiDoc
-    YAML_FRONTMATTER_REGEXP = /\A(---\s*\n.*?\n)(---\s*\n?)/m
+    YAML_FRONTMATTER_REGEXP = Sourcerer::YamlFrontmatter::REGEXP
     YAML_FRONT_MATTER_REGEXP = YAML_FRONTMATTER_REGEXP
     PAGE_ATTRIBUTE_PREFIX = 'page-'
 
@@ -327,14 +328,7 @@ module Sourcerer
     # @param source_text [String]
     # @return [Hash]
     def self.extract_yaml_frontmatter source_text
-      match = source_text.match(YAML_FRONTMATTER_REGEXP)
-      return {} unless match
-
-      frontmatter_payload = match[1].sub(/\A---\s*\n/, '')
-      parsed = YAML.safe_load(frontmatter_payload, aliases: true)
-      parsed.is_a?(Hash) ? parsed : {}
-    rescue Psych::SyntaxError
-      {}
+      Sourcerer::YamlFrontmatter.extract(source_text)
     end
 
     # Remove leading YAML front matter fence block from AsciiDoc source.
@@ -342,7 +336,7 @@ module Sourcerer
     # @param source_text [String]
     # @return [String]
     def self.strip_yaml_frontmatter source_text
-      source_text.sub(YAML_FRONTMATTER_REGEXP, '')
+      Sourcerer::YamlFrontmatter.strip(source_text)
     end
 
     # Compatibility alias.
@@ -483,5 +477,65 @@ module Sourcerer
                          :normalize_extract_tags,
                          :collect_tagged_content,
                          :normalize_mark_down_grade_options
+
+    # Utilities for filtering and partitioning Asciidoctor document attributes.
+    #
+    # Separates user-defined ("custom") attributes from those injected by
+    # Asciidoctor at parse time ("built-in").
+    #
+    # @example
+    #   custom  = Sourcerer::AsciiDoc::AttributesFilter.user_attributes(doc)
+    #   builtin = Sourcerer::AsciiDoc::AttributesFilter.builtin_attributes(doc)
+    module AttributesFilter
+      # Attribute keys injected by Asciidoctor at parse time.
+      BUILTIN_ATTR_KEYS = (Asciidoctor::DEFAULT_ATTRIBUTES.keys + %w[
+        asciidoctor asciidoctor-version
+        attribute-missing attribute-undefined
+        authorcount
+        docdate docdatetime docdir docfile docfilesuffix docname doctime doctitle doctype docyear
+        embedded
+        htmlsyntax
+        iconsdir
+        localdate localdatetime localtime localyear
+        max-include-depth
+        notitle
+        outfilesuffix
+        stylesdir
+        toc-position
+        user-home
+      ]).freeze
+
+      BUILTIN_ATTR_PATTERNS = [
+        /^backend(-|$)/,
+        /^basebackend(-|$)/,
+        /^doctype-/,
+        /^filetype(-|$)/,
+        /^safe-mode-/
+      ].freeze
+
+      module_function
+
+      # Returns user-defined attributes, excluding Asciidoctor built-ins.
+      #
+      # @param doc [Asciidoctor::Document]
+      # @return [Hash{String => String}]
+      def user_attributes doc
+        doc.attributes.reject do |k, _|
+          BUILTIN_ATTR_KEYS.include?(k) ||
+            BUILTIN_ATTR_PATTERNS.any? { |pat| pat.match?(k) }
+        end
+      end
+
+      # Returns built-in Asciidoctor attributes injected at parse time.
+      #
+      # @param doc [Asciidoctor::Document]
+      # @return [Hash{String => String}]
+      def builtin_attributes doc
+        doc.attributes.select do |k, _|
+          BUILTIN_ATTR_KEYS.include?(k) ||
+            BUILTIN_ATTR_PATTERNS.any? { |pat| pat.match?(k) }
+        end
+      end
+    end
   end
 end

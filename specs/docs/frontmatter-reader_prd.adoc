@@ -1,0 +1,47 @@
+= FrontmatterReader: PRD
+:status: implemented
+:version: 0.3.0
+
+== Overview
+
+`Sourcerer::SourceSkim` needs to incorporate a simpler Skim object that derives data/content from frontmatter YAML and section headings.
+
+`SourceSkim` currently generates structured, semantic metadata and content outline about AsciiDoc source files.
+But many use cases (Jekyll site pipelines, documentation indexers, cross-repo search tools) need to work with Markdown files, as well:
+
+* Frontmatter data (layout, title, navigation hints, etc.)
+* Section headings and their levels:
+** a flat list of section headings and their line numbers, and/or
+** a nested hierarchy of sections and subsections.
+
+== Output Shape
+
+The core operation yields a skim in one of the following configurations:
+
+[source,ruby]
+----
+{
+  title:         'Introduction',                                    # String — from first # heading
+  frontmatter:   { 'layout' => 'docs', 'title' => 'Guide', ... },  # Hash
+  sections_flat: [                                                 # Array
+    { text: 'Getting Started', level: 1, starts_at: 13 },
+    { text: 'Prerequisites',   level: 2, starts_at: 17 },
+    ...
+  ]
+}
+----
+
+[source,ruby]
+----
+{
+  title:       'Introduction',                                    # String
+  frontmatter: { 'layout' => 'docs', 'title' => 'Guide', ... },  # Hash
+  sections_tree: [                                               # Array (same shape as AsciiDoc)
+    { text: 'Getting Started', level: 1, starts_at: 13, sections: [
+      { text: 'Prerequisites', level: 2, starts_at: 17, sections: [] }
+    ] },
+    { text: 'Advanced Usage', level: 1, starts_at: 22, sections: [] },
+    ...
+  ]
+}
+----

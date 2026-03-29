@@ -255,5 +255,73 @@ RSpec.describe Sourcerer::Sync::Cast do
         expect(File.exist?(target)).to be true
       end
     end
+
+    context 'when the prime contains _skip and _liquid meta blocks' do
+      let(:meta_prime_content) do
+        <<~MD
+          <!-- tag::_liquid[] -->
+          {%- assign gem_name = 'MyGem' %}
+          <!-- end::_liquid[] -->
+
+          Preamble text.
+
+          <!-- tag::_skip[] -->
+          This section is a template notice and must not appear in the target.
+          <!-- end::_skip[] -->
+
+          <!-- tag::universal-body[] -->
+          This is the managed body content.
+          <!-- end::universal-body[] -->
+
+          Closing text.
+        MD
+      end
+
+      it 'omits _skip block and its markers from the written target' do
+        prime = tmp_file('prime_with_meta.md', meta_prime_content)
+        target = File.join(tmpdir, 'target_meta.md')
+        described_class.init(prime, target)
+        content = File.read(target)
+        expect(content).not_to include('_skip')
+        expect(content).not_to include('template notice')
+      end
+
+      it 'omits _liquid block and its markers from the written target' do
+        prime = tmp_file('prime_with_meta.md', meta_prime_content)
+        target = File.join(tmpdir, 'target_meta.md')
+        described_class.init(prime, target)
+        content = File.read(target)
+        expect(content).not_to include('_liquid')
+        expect(content).not_to include('{%- assign')
+      end
+
+      it 'preserves content outside meta blocks' do
+        prime = tmp_file('prime_with_meta.md', meta_prime_content)
+        target = File.join(tmpdir, 'target_meta.md')
+        described_class.init(prime, target)
+        content = File.read(target)
+        expect(content).to include('Preamble text.')
+        expect(content).to include('This is the managed body content.')
+        expect(content).to include('Closing text.')
+      end
+
+      it 'preserves canonical block markers in the target' do
+        prime = tmp_file('prime_with_meta.md', meta_prime_content)
+        target = File.join(tmpdir, 'target_meta.md')
+        described_class.init(prime, target)
+        content = File.read(target)
+        expect(content).to include('<!-- tag::universal-body[] -->')
+        expect(content).to include('<!-- end::universal-body[] -->')
+      end
+
+      it 'returns stripped content in diff on dry_run' do
+        prime = tmp_file('prime_with_meta.md', meta_prime_content)
+        target = File.join(tmpdir, 'dry_meta.md')
+        result = described_class.init(prime, target, dry_run: true)
+        expect(result.diff).not_to include('_skip')
+        expect(result.diff).not_to include('_liquid')
+        expect(result.diff).to include('Preamble text.')
+      end
+    end
   end
 end

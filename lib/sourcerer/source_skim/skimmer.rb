@@ -42,11 +42,11 @@ module Sourcerer
 
         if @config.include?(:attributes_custom)
           result[:attributes_custom] =
-            Sourcerer::AttributesFilter.user_attributes(document)
+            Sourcerer::AsciiDoc::AttributesFilter.user_attributes(document)
         end
         if @config.include?(:attributes_builtin)
           result[:attributes_builtin] =
-            Sourcerer::AttributesFilter.builtin_attributes(document)
+            Sourcerer::AsciiDoc::AttributesFilter.builtin_attributes(document)
         end
 
         result[:sections_tree] = tree if @config.tree?

@@ -37,11 +37,11 @@ endif::[]
 :this_prod_name: {this_proj_name}
 // end::universal-settings[]
 :this_prod_vrsn_major: 0
-:this_prod_vrsn_minor: 2
+:this_prod_vrsn_minor: 3
 :this_prod_vrsn_majmin: {this_prod_vrsn_major}.{this_prod_vrsn_minor}
-:this_prod_vrsn_patch: 1
+:this_prod_vrsn_patch: 0
 :this_prod_vrsn: {this_prod_vrsn_majmin}.{this_prod_vrsn_patch}
-:next_prod_vrsn: 0.3.0
+:next_prod_vrsn: 0.4.0
 // end::global-settings[]
 :toc: macro
 :toclevels: 4
@@ -99,7 +99,7 @@ AsciiDoc-to-Markdown conversion::
 Convert AsciiDoc documents to Markdown for agentic consumption, with a focus on preserving semantic structure and document frontmatter.
 See <<markdowngrade>>.
 
-AsciiDoc source inspection::
+AsciiDoc and Markdown source inspection::
 Skim AsciiDoc documents to produce machine-oriented outlines of sections, code blocks, tables, and other semantic elements for tooling and agent consumption.
 See <<source-skim>>.
 
@@ -300,20 +300,21 @@ Override it per call with the `canonical_prefix:` keyword argument.
 Canonical blocks use AsciiDoc-style `tag::`/`end::` markers embedded inside comments.
 Three comment styles are recognized so the same prime can manage files of any type:
 
-[cols="3m,5m",options="header"]
+[cols="3,5m",options="header"]
 |===
 | Style | Example
-| HTML / Markdown comment
-| <!-- tag::universal-intro[] -->
-| AsciiDoc line comment
+| HTML / Markdown
+| <!-- tag::universal-intro[] +++-->+++
+| AsciiDoc / JavaScript
 | // tag::universal-intro[]
-| Shell / Ruby / YAML comment
+| Shell / Ruby / YAML / INI
 | # tag::universal-intro[]
 |===
 
-The trailing `[]` is optional in all three styles.
+A block with tag names beginning with the configured prefix (default `universal-`) is treated as canonical and managed by Sync/Cast.
 
-A tag whose name begins with the configured prefix (default `universal-`) is treated as canonical and managed by Sync/Cast.
+Any block wrapped in `tag::_skip[]` and `end::_skip[]` will _not_ be passed from prime to target even during the init operation.
+
 All other tagged regions in a target file are left entirely alone, and their presence beside a canonical block never triggers a warning.
 
 [[sync-cast-operations]]
@@ -322,6 +323,8 @@ All other tagged regions in a target file are left entirely alone, and their pre
 init::
 One-time operation that renders the prime template (the whole file, not just canonical blocks) through Liquid and writes the result as a new target file.
 Use this to bootstrap a repo-local copy of a project template.
++
+NOTE: Only blocks marked `_skip` are not carried over.
 
 sync::
 Ongoing operation that scans for canonical blocks, replaces their content with the prime version (after optional Liquid rendering), and leaves everything else verbatim.
@@ -354,6 +357,18 @@ This is {{ data.variables.name }} version {{ data.variables.version }}.
 <!-- end::universal-intro[] -->
 ----
 
+Since each block is rendered independently, variables cannot reference content from other blocks.
+Use a segment wrapped in `_liquid` tags to set variables inline that will be used across all subsequent blocks.
+This `_liquid` segment only has access to variables passed into the main render call, not to any content blocks.
+
+[source,markdown]
+----
+<!-- tag::_liquid -->
+{%- assign name = data.variables.this_proj_name | default: 'Unknown Project' %}
+{%- assign version = data.variables.this_prod_vrsn | default: '0.0.0' %}
+<!-- end::_liquid -->
+----
+
 [[sync-cast-bootstrap]]
 ==== Bootstrap example
 
@@ -362,7 +377,7 @@ This is {{ data.variables.name }} version {{ data.variables.version }}.
 Sourcerer::Sync.init(
   'templates/AGENTS.markdown',
   'AGENTS.md',
-  data: { 'project' => 'my-gem', 'org' => 'DocOps' }
+  data: { 'project' => 'my-gem', 'org' => 'ACME Co' }
 )
 ----
 
@@ -421,10 +436,14 @@ Schema-aware filters (including SGYML-specific classification filters) should be
 [[source-skim]]
 === SourceSkim
 
-`Sourcerer::SourceSkim` generates machine-oriented _skims_ of AsciiDoc source documents.
+`Sourcerer::SourceSkim` generates machine-oriented _skims_ of AsciiDoc and Markdown source documents.
 
-A skim is a structured, JSON/YAML-ready outline of selected source elements:
+A skim is a structured, JSON/YAML-ready outline of selected source elements.
+AsciiDoc skims include:
 sections, code blocks, definition lists, tables, images, and more.
+
+Markdown skims include only sections and frontmatter, since other semantic elements are not reliably parseable in Markdown's freeform syntax.
+
 Skims are intended to help tooling and agents inspect documentation source without ingesting full file contents.
 
 .Example: Skim a file for sections and code blocks
@@ -441,6 +460,9 @@ skim = Sourcerer::SourceSkim.skim_file('docs/install.adoc', categories: [:code_b
 
 # Skim inline content
 skim = Sourcerer::SourceSkim.skim_string(raw_adoc_content)
+
+# Skim Markdown file with flat sections only
+skim = Sourcerer::SourceSkim.skim_file('README.md', forms: [:flat])
 ----
 
 Section shapes::
@@ -448,6 +470,7 @@ Pass `forms: [:tree]` (default), `forms: [:flat]`, or both.
 Tree shape preserves nesting; flat shape adds `parent_id` and expresses child section IDs as an array.
 
 Categories::
+(AsciiDoc skims only.)
 Default output includes `attributes_custom`, `definition_lists`, `code_blocks`, `literal_blocks`, `examples`, `sidebars`, `tables`, and `images`.
 Opt-in only (excluded by default): `attributes_builtin`, `admonitions`, `quotes`.
 Pass `categories:` with an explicit array of symbols to restrict or expand output.
@@ -457,6 +480,7 @@ The skim output schema is at `specs/data/asciidoc-source-skim.schema.json` and a
 
 [[skim-asciidoctor-extension]]
 ==== Asciidoctor extension
+
 `Sourcerer::SourceSkim::TreeProcessorExtension` integrates SourceSkim into Asciidoctor parsing pipelines.
 It stores the result as the `source-skim-result` document attribute and reads `source-skim-forms` and `source-skim-categories` document attributes for per-document configuration.
 
@@ -620,9 +644,10 @@ Use them as examples or utilities but do not rely on them in production.
 
 Current scripts include: ::
 
-link:https://github.com/DocOps/asciisourcerer/blob/main/scripts/skim_asciidoc.rb[`skim_asciidoc.rb`]:::
-For AsciiDoc source inspection.
-Generates YAML or JSON versions of `Sourcerer::SourceSkim` output for a given AsciiDoc document or collection of documents.
+link:https://github.com/DocOps/asciisourcerer/blob/main/scripts/skim_markup.rb[`skim_markup.rb`]:::
+(Formerly `skim_asciidoc.rb`.)
+For AsciiDoc/Markdown source inspection.
+Generates YAML or JSON versions of `Sourcerer::SourceSkim` output for a given AsciiDoc document, Markdown file, or collection of such.
 
 link:https://github.com/DocOps/asciisourcerer/blob/main/scripts/mark_down_grade.rb[`mark_down_grade.rb`]:::
 For AsciiDoc-to-Markdown conversion.
@@ -655,14 +680,14 @@ For each script you wish to use:
 +
 .Example: writes current GH copy to a local `scripts/` path.
 [.prompt]
- curl -o scripts/skim_asciidoc.rb https://raw.githubusercontent.com/DocOps/asciisourcerer/refs/heads/main/scripts/skim_asciidoc.rb
+ curl -o scripts/skim_markup.rb https://raw.githubusercontent.com/DocOps/asciisourcerer/refs/heads/main/scripts/skim_markup.rb
 +
 Change `-o scripts/` to wherever you wish to save the script locally.
 
 . Run the script.
 +
 [.prompt]
- bundle exec ruby scripts/skim_asciidoc.rb --help
+ bundle exec ruby scripts/skim_markup.rb --help
 
 
 [[development]]

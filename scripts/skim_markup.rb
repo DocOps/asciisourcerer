@@ -1,36 +1,16 @@
 #!/usr/bin/env ruby
-#
 # frozen_string_literal: true
 
 #
 # CLI wrapper for Sourcerer::SourceSkim.
-# Produces structured skims of AsciiDoc source files.
+# Produces structured skims of AsciiDoc and Markdown source files.
 #
-# Default output: YAML to stdout, JSON to file when -o/--output is given.
-# File extension auto-detection: .json -> JSON, .yml/.yaml -> YAML, no/other extension -> JSON.
-# Override with --yaml or --json
-# Usage:
-#   ruby scripts/skim_asciidoc.rb PATH [--tree] [--flat] [--categories CATS] [--json|--yaml] [-o FILE]
-#
-# PATH may be a file, directory (traversed recursively for *.adoc), or a glob pattern.
-#
-# --categories accepts a comma/space-separated list of category names.
-# Prefix with + or - to amend the default category set rather than replacing it.
-# Example: --categories "-admonitions,+quotes"
-#
-# NOTE: This script has been superseded by scripts/skim_markup.rb, which handles
-#       both AsciiDoc and Markdown and accepts the same options as this script.
-#       This file is retained for reference only and may be removed in a future release.
+# Format is auto-detected from file extension (.adoc, .md, .markdown).
+# Override with --adoc or --markdown when the extension is absent or misleading.
 #
 # WARNING: This script is only minimally tested and NOT officially supported.
 #          It may be altered backward-incompatibly, deprecated, or even dropped.
 #          Use it as an example but do not rely on it in production.
-#
-# This script is deprecated in favor of `skim_markup.rb`, which supports both AsciiDoc and Markdown
-#  with a unified interface.
-# This file will be removed in AsciiSourcerer 1.0.
-
-puts 'WARNING: This script is deprecated and will be removed in AsciiSourcerer 1.0; use skim_markup.rb instead.'
 
 $LOAD_PATH.unshift(File.expand_path('../lib', __dir__))
 
@@ -41,16 +21,27 @@ require 'sourcerer'
 require 'sourcerer/util/list_amend'
 require 'sourcerer/util/pathifier'
 
-options = { forms: [], output: nil, categories: nil, attributes: {}, syntax: nil }
+ADOC_EXTS     = %w[.adoc].freeze
+MARKDOWN_EXTS = %w[.md .markdown].freeze
+ALL_EXTS      = (ADOC_EXTS + MARKDOWN_EXTS).freeze
+
+options = {
+  forms:       [],
+  output:      nil,
+  categories:  nil,
+  attributes:  {},
+  syntax:      nil,
+  force_fmt:   nil
+}
 
 default_cats = Sourcerer::SourceSkim::DEFAULT_CATEGORIES.map(&:to_s)
 
 parser = OptionParser.new do |opts|
   opts.banner = "Usage: #{File.basename($PROGRAM_NAME)} PATH [options]\n\n  " \
-                "PATH  A file path, directory (recursively searched for *.adoc),\n        " \
-                "or a glob pattern (e.g. 'docs/**/*.adoc')\n"
+                "PATH  A file path, directory (recursively searched for\n        " \
+                "*.adoc, *.md, *.markdown), or a glob pattern.\n"
 
-  opts.on('--tree', 'Include a nested section tree in output (sections_tree) [default]') do
+  opts.on('--tree', 'Include a nested section tree in output (sections_tree)') do
     options[:forms] << :tree
   end
   opts.on('--flat', 'Include a flat section list in output (sections_flat)') do
@@ -58,7 +49,7 @@ parser = OptionParser.new do |opts|
   end
   opts.on(
     '--categories SPEC',
-    'Categories to include. Comma/space-separated list.',
+    'AsciiDoc only. Categories to include. Comma/space-separated list.',
     'Prefix tokens with + or - to amend defaults; otherwise replaces them.',
     "Default: #{default_cats.join(',')}") do |spec|
     options[:categories] = spec
@@ -71,9 +62,15 @@ parser = OptionParser.new do |opts|
   end
   opts.on(
     '-a', '--attribute KEY=VALUE',
-    'Set an Asciidoctor attribute (repeatable), e.g. -a env=prod') do |pair|
+    'AsciiDoc only. Set an Asciidoctor attribute (repeatable), e.g. -a env=prod') do |pair|
     key, value = pair.split('=', 2)
     options[:attributes][key] = value || ''
+  end
+  opts.on('--adoc', 'Force all paths to be treated as AsciiDoc') do
+    options[:force_fmt] = :asciidoc
+  end
+  opts.on('--markdown', 'Force all paths to be treated as Markdown') do
+    options[:force_fmt] = :markdown
   end
   opts.on(
     '-o', '--output FILE',
@@ -87,38 +84,47 @@ parser = OptionParser.new do |opts|
 end
 parser.parse!
 
-options[:forms] = [:tree] if options[:forms].empty?
-
 if ARGV.empty?
   warn "Error: PATH argument is required\n\n#{parser.help}"
   exit 1
 end
 
-# Resolve categories using ListAmend: supports fixed-list and +/- amendment modes.
-resolved_cats = Sourcerer::Util::ListAmend.apply(default_cats, options[:categories])
-options[:categories] = resolved_cats.map(&:to_sym)
+# Resolve categories (AsciiDoc only) using ListAmend.
+resolved_cats   = Sourcerer::Util::ListAmend.apply(default_cats, options[:categories])
+adoc_categories = resolved_cats.map(&:to_sym)
 
 # Resolve input path to an enumerator of matching paths using Pathifier.
 path   = ARGV.first
 result = Sourcerer::Util::Pathifier.match(path)
 
-file_paths = if result.type == :dir
-               result.enum.select { |p| p.end_with?('.adoc') }
-             else
-               result.enum.to_a
-             end
+all_paths = if result.type == :dir
+              result.enum.select { |p| ALL_EXTS.include?(File.extname(p).downcase) }
+            else
+              result.enum.to_a
+            end
 
-if file_paths.empty?
-  warn "No .adoc files found for: #{path}"
+if all_paths.empty?
+  warn "No markup files found for: #{path}"
   exit 1
 end
 
+# Warn if --categories or -a were given but no AsciiDoc files are in the set.
+if options[:force_fmt] == :markdown || all_paths.none? { |p| ADOC_EXTS.include?(File.extname(p).downcase) }
+  warn 'Warning: --categories has no effect because no AsciiDoc files are being skimmed.' if options[:categories]
+  unless options[:attributes].empty?
+    warn 'Warning: --attribute/-a has no effect because no AsciiDoc files are being skimmed.'
+  end
+end
+
+user_forms = options[:forms].empty? ? nil : options[:forms]
+
 results = {}
-file_paths.each do |fp|
+all_paths.each do |fp|
   results[fp] = Sourcerer::SourceSkim.skim_file(
     fp,
-    forms:      options[:forms],
-    categories: options[:categories].empty? ? nil : options[:categories],
+    forms:      user_forms,
+    format:     options[:force_fmt],
+    categories: adoc_categories.empty? ? nil : adoc_categories,
     attributes: options[:attributes])
 end
 
@@ -145,7 +151,7 @@ syntax = options[:syntax] || ext_syntax || (options[:output] ? :json : :yaml)
 if options[:output]
   content = syntax == :yaml ? portable.to_yaml : JSON.pretty_generate(portable)
   File.write(options[:output], content)
-  warn "Skimmed #{file_paths.size} file(s) written to #{options[:output]}"
+  warn "Skimmed #{all_paths.size} file(s) written to #{options[:output]}"
 else
   puts(syntax == :json ? JSON.pretty_generate(portable) : portable.to_yaml)
 end

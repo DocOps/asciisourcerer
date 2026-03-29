@@ -72,7 +72,8 @@ module Sourcerer
       # @return [CastResult]
       def self.init prime_path, target_path, data: {}, dry_run: false
         prime_text = File.read(prime_path)
-        rendered = data.empty? ? prime_text : render_liquid_string(prime_text, data)
+        clean_text = strip_meta_blocks(prime_text)
+        rendered   = data.empty? ? clean_text : render_liquid_string(clean_text, data)
 
         unless dry_run
           FileUtils.mkdir_p(File.dirname(File.expand_path(target_path)))
@@ -107,14 +108,22 @@ module Sourcerer
         prime_text = File.read(@prime_path)
         target_text = File.read(@target_path)
 
+        # Parse with canonical_prefix: '' so that ALL tagged regions -- including
+        # the non-canonical _liquid preamble block -- surface as Block objects
+        # rather than being swallowed into TextSegments.
         prime_segments  = BlockParser.parse(
           prime_text,
-          canonical_prefix: @canonical_prefix,
+          canonical_prefix: '',
           tag_patterns: @tag_patterns)
         target_segments = BlockParser.parse(
           target_text,
-          canonical_prefix: @canonical_prefix,
+          canonical_prefix: '',
           tag_patterns: @tag_patterns)
+
+        # Extract the _liquid preamble from the prime (non-canonical; not synced as a
+        # canonical block but used to carry Liquid variable context to all rendered content).
+        prime_liquid_block = prime_segments.find { |s| s.is_a?(BlockParser::Block) && s.tag == '_liquid' }
+        liquid_preamble = prime_liquid_block&.content.to_s
 
         prime_blocks = BlockParser.extract_canonical(prime_segments, canonical_prefix: @canonical_prefix)
         target_blocks, errors = validate_target_canonical(target_segments)
@@ -129,7 +138,10 @@ module Sourcerer
         end
 
         warnings = collect_warnings(prime_blocks, target_blocks, target_text)
-        new_segments, applied_changes = apply_prime_blocks(target_segments, prime_blocks)
+        new_segments, applied_changes = apply_prime_blocks(
+          target_segments, prime_blocks,
+          prime_liquid_block: prime_liquid_block,
+          liquid_preamble: liquid_preamble)
 
         new_text = reconstruct(new_segments)
         diff = generate_diff(target_text, new_text) if applied_changes.any? || @dry_run
@@ -154,6 +166,23 @@ module Sourcerer
 
         template = Liquid::Template.parse(content)
         template.render(data.transform_keys(&:to_s))
+      end
+
+      # Remove every underscore-prefixed meta block (+_skip+, +_liquid+, etc.) from
+      # a prime text before it is written to a target during {.init}.
+      # These blocks carry template instructions or Liquid context that are only
+      # meaningful during the prime→target rendering pass, not in the output file.
+      # @api private
+      def self.strip_meta_blocks text
+        tag_patterns = BlockParser.build_tag_patterns(
+          BlockParser::DEFAULT_TAG_SYNTAX_START,
+          BlockParser::DEFAULT_TAG_SYNTAX_END,
+          BlockParser::DEFAULT_COMMENT_SYNTAX_PATTERNS)
+        segments = BlockParser.parse(text, canonical_prefix: '', tag_patterns: tag_patterns)
+        segments
+          .reject { |s| s.is_a?(BlockParser::Block) && s.tag.start_with?('_') }
+          .map { |s| s.is_a?(BlockParser::Block) ? "#{s.open_line}#{s.content}#{s.close_line}" : s.content }
+          .join
       end
 
       private
@@ -192,29 +221,65 @@ module Sourcerer
         warnings
       end
 
-      def apply_prime_blocks target_segments, prime_blocks
+      def apply_prime_blocks target_segments, prime_blocks,
+        prime_liquid_block: nil, liquid_preamble: ''
         applied_changes = []
+        has_preamble = !liquid_preamble.empty?
+        liquid_seen = false
 
         new_segments = target_segments.map do |segment|
-          next segment unless segment.is_a?(BlockParser::Block) && canonical?(segment.tag)
-          next segment unless prime_blocks.key?(segment.tag)
+          if segment.is_a?(BlockParser::Block)
+            if segment.tag == '_liquid'
+              # Sync the _liquid block content from prime to target
+              liquid_seen = true
+              next segment unless prime_liquid_block
+              next segment if prime_liquid_block.content == segment.content
 
-          prime_content = prime_blocks[segment.tag].content
-          rendered_content = render_content(prime_content)
+              applied_changes << '_liquid'
+              BlockParser::Block.new(
+                tag: '_liquid',
+                open_line: segment.open_line,
+                content: prime_liquid_block.content,
+                close_line: segment.close_line)
 
-          if rendered_content == segment.content
-            segment
+            elsif canonical?(segment.tag)
+              next segment unless prime_blocks.key?(segment.tag)
+
+              prime_content = prime_blocks[segment.tag].content
+              rendered_content = render_content(prime_content, preamble: liquid_preamble)
+
+              if rendered_content == segment.content
+                segment
+              else
+                applied_changes << segment.tag
+                BlockParser::Block.new(
+                  tag: segment.tag,
+                  open_line: segment.open_line,
+                  content: rendered_content,
+                  close_line: segment.close_line)
+              end
+
+            else
+              segment
+            end
+
+          elsif segment.is_a?(BlockParser::TextSegment) && has_preamble && liquid_seen
+            # Render in-between text with the preamble context, but only after the
+            # _liquid block has been encountered so all variables are in scope.
+            rendered_text = render_content(segment.content, preamble: liquid_preamble)
+            if rendered_text == segment.content
+              segment
+            else
+              applied_changes << 'document-text'
+              BlockParser::TextSegment.new(content: rendered_text)
+            end
+
           else
-            applied_changes << segment.tag
-            BlockParser::Block.new(
-              tag: segment.tag,
-              open_line: segment.open_line,
-              content: rendered_content,
-              close_line: segment.close_line)
+            segment
           end
         end
 
-        [new_segments, applied_changes]
+        [new_segments, applied_changes.uniq]
       end
 
       def reconstruct segments
@@ -244,10 +309,11 @@ module Sourcerer
         end
       end
 
-      def render_content content
-        return content if @data.empty?
+      def render_content content, preamble: ''
+        return content if @data.empty? && preamble.empty?
 
-        self.class.render_liquid_string(content, @data)
+        full = preamble.empty? ? content : "#{preamble}#{content}"
+        self.class.render_liquid_string(full, @data)
       end
 
       def generate_diff old_text, new_text

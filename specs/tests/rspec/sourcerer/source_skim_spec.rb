@@ -23,7 +23,7 @@ RSpec.describe Sourcerer::SourceSkim do
 
       it 'includes the source line count as a positive integer' do
         expect(skim[:lines]).to be_a(Integer)
-        expect(skim[:lines]).to be > 0
+        expect(skim[:lines]).to be_positive
       end
 
       it 'includes author-defined attributes' do
@@ -351,9 +351,9 @@ RSpec.describe Sourcerer::SourceSkim do
         expect(result[:attributes_custom]).to include('build-env' => 'test')
       end
 
-      it 'does not mutate LOAD_OPTS' do
+      it 'does not mutate LOAD_OPTS attributes' do
         described_class.skim_file(fixture_path, attributes: { 'x' => 'y' })
-        expect(Sourcerer::SourceSkim::LOAD_OPTS).not_to have_key(:attributes)
+        expect(Sourcerer::SourceSkim::LOAD_OPTS[:attributes]).not_to have_key('x')
       end
     end
   end
