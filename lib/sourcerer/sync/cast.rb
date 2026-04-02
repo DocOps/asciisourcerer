@@ -71,9 +71,29 @@ module Sourcerer
       #  but do not write.
       # @return [CastResult]
       def self.init prime_path, target_path, data: {}, dry_run: false
-        prime_text = File.read(prime_path)
-        clean_text = strip_meta_blocks(prime_text)
-        rendered   = data.empty? ? clean_text : render_liquid_string(clean_text, data)
+        segments = parse_prime_segments(File.read(prime_path))
+
+        liquid_preamble = segments
+                          .find { |s| s.is_a?(BlockParser::Block) && s.tag == '_liquid' }
+                          &.content.to_s
+
+        clean_text = segments
+                     .reject { |s| s.is_a?(BlockParser::Block) && s.tag.start_with?('_') }
+                     .map { |s| s.is_a?(BlockParser::Block) ? "#{s.open_line}#{s.content}#{s.close_line}" : s.content }
+                     .join
+
+        rendered = if data.empty? && liquid_preamble.empty?
+                     clean_text
+                   else
+                     # Wrap the preamble in a silent capture block so the assign statements
+                     # populate variables without emitting any whitespace into the output.
+                     full = if liquid_preamble.empty?
+                              clean_text
+                            else
+                              "{%- capture __preamble__ -%}#{liquid_preamble}{%- endcapture -%}#{clean_text}"
+                            end
+                     render_liquid_string(full, data)
+                   end
 
         unless dry_run
           FileUtils.mkdir_p(File.dirname(File.expand_path(target_path)))
@@ -174,15 +194,22 @@ module Sourcerer
       # meaningful during the prime→target rendering pass, not in the output file.
       # @api private
       def self.strip_meta_blocks text
+        parse_prime_segments(text)
+          .reject { |s| s.is_a?(BlockParser::Block) && s.tag.start_with?('_') }
+          .map { |s| s.is_a?(BlockParser::Block) ? "#{s.open_line}#{s.content}#{s.close_line}" : s.content }
+          .join
+      end
+
+      # Parse a prime template using the default tag patterns.
+      # Shared by {.init} and {.strip_meta_blocks} to avoid repeating
+      # the +build_tag_patterns+ / +parse+ boilerplate.
+      # @api private
+      def self.parse_prime_segments text
         tag_patterns = BlockParser.build_tag_patterns(
           BlockParser::DEFAULT_TAG_SYNTAX_START,
           BlockParser::DEFAULT_TAG_SYNTAX_END,
           BlockParser::DEFAULT_COMMENT_SYNTAX_PATTERNS)
-        segments = BlockParser.parse(text, canonical_prefix: '', tag_patterns: tag_patterns)
-        segments
-          .reject { |s| s.is_a?(BlockParser::Block) && s.tag.start_with?('_') }
-          .map { |s| s.is_a?(BlockParser::Block) ? "#{s.open_line}#{s.content}#{s.close_line}" : s.content }
-          .join
+        BlockParser.parse(text, canonical_prefix: '', tag_patterns: tag_patterns)
       end
 
       private
