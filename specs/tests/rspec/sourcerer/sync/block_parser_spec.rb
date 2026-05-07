@@ -31,7 +31,7 @@ RSpec.describe Sourcerer::Sync::BlockParser do
       end
 
       it 'identifies two Block segments' do
-        blocks = described_class.parse(text).select { |s| s.is_a?(described_class::Block) }
+        blocks = described_class.parse(text).grep(described_class::Block)
         expect(blocks.map(&:tag)).to eq(%w[universal-intro universal-footer])
       end
 
@@ -69,7 +69,7 @@ RSpec.describe Sourcerer::Sync::BlockParser do
       end
 
       it 'parses the block correctly' do
-        blocks = described_class.parse(text).select { |s| s.is_a?(described_class::Block) }
+        blocks = described_class.parse(text).grep(described_class::Block)
         expect(blocks.size).to eq(1)
         expect(blocks.first.tag).to eq('universal-intro')
         expect(blocks.first.content).to eq("Intro paragraph.\n")
@@ -90,7 +90,7 @@ RSpec.describe Sourcerer::Sync::BlockParser do
       end
 
       it 'parses the block' do
-        blocks = described_class.parse(text).select { |s| s.is_a?(described_class::Block) }
+        blocks = described_class.parse(text).grep(described_class::Block)
         expect(blocks.size).to eq(1)
         expect(blocks.first.tag).to eq('universal-config')
         expect(blocks.first.content).to eq("some: yaml\n")
@@ -107,7 +107,7 @@ RSpec.describe Sourcerer::Sync::BlockParser do
       end
 
       it 'parses the block despite the missing []' do
-        blocks = described_class.parse(text).select { |s| s.is_a?(described_class::Block) }
+        blocks = described_class.parse(text).grep(described_class::Block)
         expect(blocks.size).to eq(1)
         expect(blocks.first.tag).to eq('universal-approach')
       end
@@ -163,7 +163,7 @@ RSpec.describe Sourcerer::Sync::BlockParser do
       end
 
       it 'treats inner tags as block content' do
-        blocks = described_class.parse(text).select { |s| s.is_a?(described_class::Block) }
+        blocks = described_class.parse(text).grep(described_class::Block)
         expect(blocks.size).to eq(1)
         expect(blocks.first.tag).to eq('universal-outer')
         expect(blocks.first.content).to include('// tag::inner-block[]')

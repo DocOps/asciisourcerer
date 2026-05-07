@@ -115,7 +115,7 @@ module Sourcerer
 
       tags = [tag] if tag
       raise ArgumentError, 'at least one tag must be specified' if tags.empty?
-      raise ArgumentError, 'tags must all be strings' unless tags.all? { |item| item.is_a?(String) }
+      raise ArgumentError, 'tags must all be strings' unless tags.all?(String)
 
       tags
     end
