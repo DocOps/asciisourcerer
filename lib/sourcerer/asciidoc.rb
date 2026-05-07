@@ -273,7 +273,7 @@ module Sourcerer
     def self.compose_frontmatter_block frontmatter
       return nil if frontmatter.nil? || frontmatter.empty?
 
-      yaml_payload = YAML.dump(frontmatter)
+      yaml_payload = YAML.dump(frontmatter, line_width: -1)
       yaml_payload = yaml_payload.sub(/\A---\s*\n/, '')
       yaml_payload = yaml_payload.sub(/\n\.\.\.\s*\z/, "\n")
 
