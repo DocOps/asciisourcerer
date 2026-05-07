@@ -20,6 +20,17 @@ docs:
     target: .agent/docs/missions/
     synced: true
 
+templates:
+  manifest:
+    - source: templates/AGENTS.markdown
+      target: AGENTS.md
+    - source: templates/gitignore
+      target: .gitignore
+    - source: templates/README.asciidoc
+      target: README.adoc
+    - source: templates/README.asciidoc
+      target: gems/docopslab-dev/README.adoc
+
 tools:
   - tool: rubocop
     files:

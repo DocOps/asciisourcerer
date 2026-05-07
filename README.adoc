@@ -37,12 +37,13 @@ endif::[]
 :this_prod_name: {this_proj_name}
 // end::universal-settings[]
 :this_prod_vrsn_major: 0
-:this_prod_vrsn_minor: 3
+:this_prod_vrsn_minor: 4
 :this_prod_vrsn_majmin: {this_prod_vrsn_major}.{this_prod_vrsn_minor}
-:this_prod_vrsn_patch: 1
+:this_prod_vrsn_patch: 0
 :this_prod_vrsn: {this_prod_vrsn_majmin}.{this_prod_vrsn_patch}
-:next_prod_vrsn: 0.4.0
+:next_prod_vrsn: 0.5.0
 // end::global-settings[]
+// end::ai-prompt[]
 :toc: macro
 :toclevels: 4
 :this_prod_repo_files_path: {this_proj_src_www_url}/tree/main
