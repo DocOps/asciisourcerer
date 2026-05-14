@@ -53,7 +53,7 @@ module Sourcerer
 
         site = ::Jekyll::Site.new(config)
 
-        include_paths = site.includes_load_paths || []
+        include_paths = site.config['includes_load_paths'] || []
         site.inclusions ||= {}
 
         include_paths.each do |dir|
