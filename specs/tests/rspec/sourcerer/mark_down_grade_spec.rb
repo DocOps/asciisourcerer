@@ -6,7 +6,9 @@ RSpec.describe Sourcerer::MarkDownGrade do
   let(:fixtures_dir) { File.expand_path('../../fixtures/mark_down_grade', __dir__) }
 
   before do
-    described_class.bootstrap!(preserve_heading_ids: true, strip_internal_links: false)
+    described_class.bootstrap!(
+      preserve_heading_ids: true, strip_internal_links: false,
+      convert_tables_to_markdown: false)
   end
 
   describe '.convert_html' do

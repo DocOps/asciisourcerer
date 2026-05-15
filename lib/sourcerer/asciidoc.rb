@@ -227,7 +227,7 @@ module Sourcerer
       # Build options for markdown converter, including table conversion mode
       converter_options = options[:markdown_options].dup
       # Pass frontmatter table conversion setting through converter_options
-      if options[:convert_tables_to_markdown]
+      if options.key?(:convert_tables_to_markdown)
         converter_options[:convert_tables_to_markdown] =
           options[:convert_tables_to_markdown]
       end
@@ -286,7 +286,7 @@ module Sourcerer
     def self.compose_frontmatter_block frontmatter
       return nil if frontmatter.nil? || frontmatter.empty?
 
-      yaml_payload = YAML.dump(frontmatter, line_width: -1)
+      yaml_payload = Psych.dump(frontmatter, nil, { line_width: -1 })
       yaml_payload = yaml_payload.sub(/\A---\s*\n/, '')
       yaml_payload = yaml_payload.sub(/\n\.\.\.\s*\z/, "\n")
 

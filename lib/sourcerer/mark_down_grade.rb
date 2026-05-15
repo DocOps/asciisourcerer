@@ -648,7 +648,6 @@ module Sourcerer
     end
 
     # Convert HTML into Markdown with MarkDownGrade converters.
-    # Convert HTML into Markdown with MarkDownGrade converters.
     # Options include:
     #   convert_tables_to_markdown: Override global config for table conversion (true/false)
     def self.convert_html html, options={}
