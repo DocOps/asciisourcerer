@@ -227,7 +227,10 @@ module Sourcerer
       # Build options for markdown converter, including table conversion mode
       converter_options = options[:markdown_options].dup
       # Pass frontmatter table conversion setting through converter_options
-      converter_options[:convert_tables_to_markdown] = options[:convert_tables_to_markdown] if options[:convert_tables_to_markdown]
+      if options[:convert_tables_to_markdown]
+        converter_options[:convert_tables_to_markdown] =
+          options[:convert_tables_to_markdown]
+      end
       if converter_options[:convert_tables_to_markdown].nil? && frontmatter.key?('tables-to-markdown')
         converter_options[:convert_tables_to_markdown] = frontmatter['tables-to-markdown']
       end
@@ -249,7 +252,8 @@ module Sourcerer
 
     # @api private
     def self.normalize_mark_down_grade_options options
-      supported_option_keys = %i[html_output_path backend header_footer include_frontmatter markdown_options attributes convert_tables_to_markdown]
+      supported_option_keys = %i[html_output_path backend header_footer include_frontmatter markdown_options attributes
+                                 convert_tables_to_markdown]
       unknown_option_keys = options.keys - supported_option_keys
       raise ArgumentError, "unknown option(s): #{unknown_option_keys.join(', ')}" unless unknown_option_keys.empty?
 

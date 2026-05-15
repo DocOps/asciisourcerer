@@ -172,7 +172,8 @@ RSpec.describe Sourcerer::MarkDownGrade do
       end
 
       it 'converts table when to-markdown is mixed with other wrapper classes in html5s' do
-        html = '<div class="table-block frame-all to-markdown other"><table class="grid-all"><tr><td>Mixed</td></tr></table></div>'
+        html = '<div class="table-block frame-all to-markdown other">' \
+               '<table class="grid-all"><tr><td>Mixed</td></tr></table></div>'
         markdown = convert_html_fragment(html)
         expect(markdown).to include('|')
         expect(markdown).to include('Mixed')
@@ -185,7 +186,7 @@ RSpec.describe Sourcerer::MarkDownGrade do
         expect(markdown).to include('<table>')
       end
 
-      it 'handles complex table with colgroups, styling, and to-markdown class' do
+      it 'strips colgroup, class, and style from complex table with to-markdown class' do
         html = <<~HTML
           <table class="to-markdown">
             <colgroup><col style="width:30%;"></colgroup>
@@ -198,10 +199,19 @@ RSpec.describe Sourcerer::MarkDownGrade do
           </table>
         HTML
         markdown = convert_html_fragment(html)
-        # Should be converted to markdown AND cleaned
         expect(markdown).not_to include('<colgroup>')
         expect(markdown).not_to include('class="')
         expect(markdown).not_to include('style="')
+      end
+
+      it 'converts complex table with to-markdown class to markdown syntax' do
+        html = <<~HTML
+          <table class="to-markdown">
+            <tr><th>Header</th></tr>
+            <tr><td>Content</td></tr>
+          </table>
+        HTML
+        markdown = convert_html_fragment(html)
         expect(markdown).to include('|')
         expect(markdown).to include('Header')
       end
@@ -223,7 +233,7 @@ RSpec.describe Sourcerer::MarkDownGrade do
         expect(markdown).to include('Table2')
       end
 
-      describe 'global table conversion mode' do
+      describe 'global table conversion mode' do # rubocop:disable RSpec/NestedGroups
         it 'converts all tables to markdown when global mode is enabled' do
           described_class.bootstrap!(convert_tables_to_markdown: true)
           html = '<table><tr><td>A</td><td>B</td></tr></table>'
@@ -291,7 +301,7 @@ RSpec.describe Sourcerer::MarkDownGrade do
         end
       end
 
-      describe 'frontmatter-based table conversion mode' do
+      describe 'frontmatter-based table conversion mode' do # rubocop:disable RSpec/NestedGroups
         it 'extracts tables-to-markdown from YAML frontmatter' do
           html_with_frontmatter = <<~HTML
             ---

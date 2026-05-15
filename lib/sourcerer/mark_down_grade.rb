@@ -791,9 +791,9 @@ module Sourcerer
       # (This would be set by AsciiDoc's page attributes)
       if html_body.include?('page-tables-to-markdown')
         # Look for data attributes or comments that might encode this
-        if html_body.match?(/page-tables-to-markdown['\"]?\s*[:=]\s*['\"]*true/i)
+        if html_body.match?(/page-tables-to-markdown['"]?\s*[:=]\s*['"]*true/i)
           return true
-        elsif html_body.match?(/page-tables-to-markdown['\"]?\s*[:=]\s*['\"]*false/i)
+        elsif html_body.match?(/page-tables-to-markdown['"]?\s*[:=]\s*['"]*false/i)
           return false
         end
       end
@@ -811,8 +811,6 @@ module Sourcerer
         true
       when 'false', '0', 'no', 'off', ''
         false
-      else
-        nil
       end
     end
 
