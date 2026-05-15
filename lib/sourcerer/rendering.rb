@@ -86,7 +86,7 @@ module Sourcerer
     # @return [void]
     def self.render_with_converter render_entry
       data_file = render_entry[:data]
-      out_file = render_entry[:out]
+      out_file  = render_entry[:out]
       raise ArgumentError, 'render entry missing :data' unless data_file
       raise ArgumentError, 'render entry missing :out' unless out_file
 

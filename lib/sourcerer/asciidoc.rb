@@ -115,7 +115,7 @@ module Sourcerer
 
       tags = [tag] if tag
       raise ArgumentError, 'at least one tag must be specified' if tags.empty?
-      raise ArgumentError, 'tags must all be strings' unless tags.all? { |item| item.is_a?(String) }
+      raise ArgumentError, 'tags must all be strings' unless tags.all?(String)
 
       tags
     end
@@ -198,6 +198,7 @@ module Sourcerer
     # @param include_frontmatter [Boolean] Whether to prepend markdown YAML front matter.
     # @param markdown_options [Hash] Options passed to markdown converter.
     # @param markdown_converter [#call] Callable that accepts `(html, markdown_options)`.
+    # @param convert_tables_to_markdown [Boolean] Convert all tables to markdown UNLESS they have .no-markdown class.
     # @return [Hash] Conversion result containing markdown, frontmatter, and backend info.
     def self.mark_down_grade source_path, markdown_output_path=nil, markdown_converter:, **options
       options = normalize_mark_down_grade_options(options)
@@ -223,7 +224,17 @@ module Sourcerer
       end
 
       frontmatter_block, html_for_markdown = split_frontmatter_block(html_with_frontmatter)
-      markdown_body = markdown_converter.call(html_for_markdown, options[:markdown_options])
+      # Build options for markdown converter, including table conversion mode
+      converter_options = options[:markdown_options].dup
+      # Pass frontmatter table conversion setting through converter_options
+      if options.key?(:convert_tables_to_markdown)
+        converter_options[:convert_tables_to_markdown] =
+          options[:convert_tables_to_markdown]
+      end
+      if converter_options[:convert_tables_to_markdown].nil? && frontmatter.key?('tables-to-markdown')
+        converter_options[:convert_tables_to_markdown] = frontmatter['tables-to-markdown']
+      end
+      markdown_body = markdown_converter.call(html_for_markdown, converter_options)
       markdown = frontmatter_block ? "#{frontmatter_block}\n\n#{markdown_body}" : markdown_body
 
       if markdown_output_path
@@ -241,7 +252,8 @@ module Sourcerer
 
     # @api private
     def self.normalize_mark_down_grade_options options
-      supported_option_keys = %i[html_output_path backend header_footer include_frontmatter markdown_options attributes]
+      supported_option_keys = %i[html_output_path backend header_footer include_frontmatter markdown_options attributes
+                                 convert_tables_to_markdown]
       unknown_option_keys = options.keys - supported_option_keys
       raise ArgumentError, "unknown option(s): #{unknown_option_keys.join(', ')}" unless unknown_option_keys.empty?
 
@@ -251,7 +263,8 @@ module Sourcerer
         header_footer: options.fetch(:header_footer, false),
         include_frontmatter: options.fetch(:include_frontmatter, true),
         markdown_options: options.fetch(:markdown_options, { github_flavored: true }),
-        attributes: options.fetch(:attributes, {})
+        attributes: options.fetch(:attributes, {}),
+        convert_tables_to_markdown: options[:convert_tables_to_markdown]
       }
     end
 
@@ -273,7 +286,7 @@ module Sourcerer
     def self.compose_frontmatter_block frontmatter
       return nil if frontmatter.nil? || frontmatter.empty?
 
-      yaml_payload = YAML.dump(frontmatter)
+      yaml_payload = Psych.dump(frontmatter, nil, { line_width: -1 })
       yaml_payload = yaml_payload.sub(/\A---\s*\n/, '')
       yaml_payload = yaml_payload.sub(/\n\.\.\.\s*\z/, "\n")
 
@@ -317,10 +330,31 @@ module Sourcerer
         next unless key.start_with?(prefix)
 
         normalized_key = key.sub(/\A#{Regexp.escape(prefix)}/, '')
-        attributes[normalized_key] = value.to_s
+        attributes[normalized_key] = coerce_page_attribute_value(value)
       end
 
       attributes
+    end
+
+    # Coerce page attribute values to appropriate types (boolean, string, etc).
+    # Preserves boolean values and converts string representations to boolean where appropriate.
+    #
+    # @param value [Object] The attribute value from document.attributes.
+    # @return [Object] The coerced value.
+    def self.coerce_page_attribute_value value
+      # Preserve actual booleans
+      return value if value.is_a?(TrueClass) || value.is_a?(FalseClass)
+
+      # Convert string representations of booleans
+      string_val = value.to_s.downcase.strip
+      case string_val
+      when 'true', '1', 'yes', 'on'
+        true
+      when 'false', '0', 'no', 'off'
+        false
+      else
+        value.to_s
+      end
     end
 
     # Parse optional YAML front matter fenced with --- at the top of source content.
@@ -476,7 +510,8 @@ module Sourcerer
                          :normalize_extract_tagged_content_options,
                          :normalize_extract_tags,
                          :collect_tagged_content,
-                         :normalize_mark_down_grade_options
+                         :normalize_mark_down_grade_options,
+                         :coerce_page_attribute_value
 
     # Utilities for filtering and partitioning Asciidoctor document attributes.
     #
