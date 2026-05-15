@@ -51,8 +51,14 @@ tools:
         target: .config/vale.local.ini
         synced: false
     paths:
+      exts: ['adoc']
+      lint: ['.']
       skip:
-        - specs/tests/fixtures/kitchen-sink.adoc
+        - specs/**/*
+        - .vendor/**/*
+        - .config/.vendor/**/*
+        - build/**/*
+        - .agent/**/*
 
   - tool: htmlproofer
     enabled: false  # Disabled by default, enable per project
