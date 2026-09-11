@@ -80,6 +80,20 @@ RSpec.describe Sourcerer::Rendering do
       described_class.render_template(template_file, data_file, out_file, engine: 'erb', attrs_source: 'attrs.adoc')
       expect(Sourcerer::Yaml).to have_received(:load_with_attributes).with(data_file, { 'site' => 'docs' })
     end
+
+    it 'renders liquid output with default data object' do
+      liquid_template = write_file('template.liquid', '{{ data.name }}')
+      described_class.render_template(liquid_template, data_file, out_file, engine: 'liquid')
+      expect(File.read(out_file)).to eq('world')
+    end
+
+    it 'resolves {% embed %} partials via includes_load_paths (regression for a missing context register)' do
+      write_file('partial.liquid', 'Hello {{ data.name }}')
+      embed_template = write_file('embed.liquid', '{% embed "partial.liquid" %}')
+      described_class.render_template(
+        embed_template, data_file, out_file, engine: 'liquid', includes_load_paths: [tmpdir])
+      expect(File.read(out_file)).to eq('Hello world')
+    end
   end
 
   describe '.render_outputs' do

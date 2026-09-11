@@ -175,14 +175,9 @@ module Sourcerer
 
       file_system = Sourcerer::Jekyll::Liquid::FileSystem.new(paths)
 
+      registers = { site: site, file_system: file_system, includes_load_paths: paths }
       template = Liquid::Template.parse(template_content)
-      options = {
-        registers: {
-          site: site,
-          file_system: file_system
-        }
-      }
-      template.render(context, options)
+      template.render(context, registers: registers)
     end
 
     # Render a Liquid template string directly with a data hash.
