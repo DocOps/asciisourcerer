@@ -229,7 +229,7 @@ module Sourcerer
       end
 
       def process_blocks blocks, level, section_id
-        # rubocop:disable Metrics/BlockLength
+        # rubocop:disable-next Metrics/BlockLength
         blocks.each do |block|
           case block.context
           when :section
@@ -384,7 +384,6 @@ module Sourcerer
             process_blocks(block.blocks, level, section_id) if block.respond_to?(:blocks) && block.blocks.any?
           end
         end
-        # rubocop:enable Metrics/BlockLength
       end
     end
   end

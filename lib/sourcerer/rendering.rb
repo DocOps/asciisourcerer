@@ -37,7 +37,9 @@ module Sourcerer
           data_object: data_obj,
           attrs_source: attrs_source,
           engine: engine,
-          vars: render_entry[:vars] || {})
+          vars: render_entry[:vars] || {},
+          preserve_missing: render_entry[:preserve_missing] || false,
+          preserve_empty: render_entry[:preserve_empty] || false)
       end
     end
 
@@ -53,37 +55,51 @@ module Sourcerer
     # @param vars [Hash] Arbitrary caller-supplied variables, exposed to the
     #   template as `vars` (e.g. to parameterize a shared template between
     #   multiple render entries in a manifest).
+    # @param preserve_missing [Boolean] Liquid-only, independent of
+    #   `preserve_empty`. When true, a `{{ ... }}` expression that evaluates
+    #   to nil renders as its own original source text instead of an empty
+    #   string, so an unfilled field stays visible for manual completion
+    #   rather than silently disappearing. Has no effect on a defined
+    #   empty value (`""`, `[]`, `{}`).
+    # @param preserve_empty [Boolean] Liquid-only, independent of
+    #   `preserve_missing`. When true, a `{{ ... }}` expression that
+    #   evaluates to a defined-but-empty String/Array/Hash (`""`, `[]`,
+    #   `{}`) is preserved as its own original source text the same way.
+    #   Has no effect on nil. `0` and `false` are never affected by either
+    #   option.
     def self.render_template template_file, data_file, out_file, **options
-      supported_option_keys = %i[data_object includes_load_paths attrs_source engine vars]
+      supported_option_keys = %i[data_object includes_load_paths attrs_source engine vars
+                                 preserve_missing preserve_empty]
       unknown_option_keys = options.keys - supported_option_keys
       raise ArgumentError, "unknown option(s): #{unknown_option_keys.join(', ')}" unless unknown_option_keys.empty?
 
       data_object = options.fetch(:data_object, 'data')
-      includes_load_paths = options.fetch(:includes_load_paths, [])
-      attrs_source = options[:attrs_source]
-      engine = options.fetch(:engine, 'liquid')
+      data = load_render_data(data_file, options[:attrs_source])
       vars = (options[:vars] || {}).transform_keys(&:to_s)
+      context = { data_object => data, 'include' => { data_object => data }, 'vars' => vars }
 
-      data = load_render_data(data_file, attrs_source)
+      preserve = { missing: options.fetch(:preserve_missing, false), empty: options.fetch(:preserve_empty, false) }
+      rendered = render_in_engine(
+        options.fetch(:engine, 'liquid'), template_file, context, options.fetch(:includes_load_paths, []), preserve)
+
       out_file = File.expand_path(out_file)
       FileUtils.mkdir_p(File.dirname(out_file))
-
-      template_path = File.expand_path(template_file)
-      template_content = File.read(template_path)
-
-      context = {
-        data_object => data,
-        'include' => { data_object => data },
-        'vars' => vars
-      }
-
-      rendered = case engine.to_s
-                 when 'erb' then render_erb(template_content, context)
-                 when 'liquid' then render_liquid(template_file, template_content, context, includes_load_paths)
-                 else raise ArgumentError, "Unsupported template engine: #{engine}"
-                 end
-
       File.write(out_file, rendered)
+    end
+
+    # @api private
+    # Dispatches rendering to the requested template engine.
+    #
+    # @param preserve [Hash] `{missing:, empty:}` -- see {.render_template}'s
+    #   `preserve_missing`/`preserve_empty` options.
+    # @return [String]
+    def self.render_in_engine engine, template_file, context, includes_load_paths, preserve
+      template_content = File.read(File.expand_path(template_file))
+      case engine.to_s
+      when 'erb' then render_erb(template_content, context)
+      when 'liquid' then render_liquid(template_file, template_content, context, includes_load_paths, preserve)
+      else raise ArgumentError, "Unsupported template engine: #{engine}"
+      end
     end
 
     # Renders output using a converter callable or converter constant name.
@@ -151,33 +167,43 @@ module Sourcerer
     # @param template_content [String]
     # @param context [Hash]
     # @param includes_load_paths [Array<String>]
+    # @param preserve [Hash] `{missing:, empty:}` -- see {.render_template}'s
+    #   `preserve_missing`/`preserve_empty` options.
     # @return [String]
-    def self.render_liquid template_file, template_content, context, includes_load_paths
+    def self.render_liquid template_file, template_content, context, includes_load_paths, preserve
       require_relative 'jekyll'
       require_relative 'jekyll/liquid/filters'
       require_relative 'jekyll/liquid/tags'
+      require_relative 'jekyll/liquid/preserve_missing_variables'
       require 'liquid' unless defined?(Liquid::Template)
       Sourcerer::Jekyll.initialize_liquid_runtime
 
+      registers = liquid_registers(template_file, includes_load_paths)
+      template = Liquid::Template.parse(template_content)
+      render = -> { template.render(context, registers: registers) }
+
+      return render.call unless preserve[:missing] || preserve[:empty]
+
+      Sourcerer::Jekyll::Liquid::PreserveMissingVariables.with_active(
+        preserve_missing: preserve[:missing], preserve_empty: preserve[:empty], &render)
+    end
+
+    # @api private
+    # Builds the Liquid registers hash (fake site + file system) a template
+    # render needs to resolve `{% embed %}`/include partials.
+    #
+    # @return [Hash]
+    def self.liquid_registers template_file, includes_load_paths
       fallback_templates_dir = File.expand_path('.', Dir.pwd)
       template_dir = File.dirname(File.expand_path(template_file))
       template_parent_dir = File.dirname(template_dir)
 
-      paths = if includes_load_paths.any?
-                includes_load_paths
-              else
-                [template_parent_dir, template_dir, fallback_templates_dir]
-              end
-
-      site = Sourcerer::Jekyll::Bootstrapper.fake_site(
-        includes_load_paths: paths,
-        plugin_dirs: [])
-
+      default_paths = [template_parent_dir, template_dir, fallback_templates_dir]
+      paths = includes_load_paths.any? ? includes_load_paths : default_paths
+      site = Sourcerer::Jekyll::Bootstrapper.fake_site(includes_load_paths: paths, plugin_dirs: [])
       file_system = Sourcerer::Jekyll::Liquid::FileSystem.new(paths)
 
-      registers = { site: site, file_system: file_system, includes_load_paths: paths }
-      template = Liquid::Template.parse(template_content)
-      template.render(context, registers: registers)
+      { site: site, file_system: file_system, includes_load_paths: paths }
     end
 
     # Render a Liquid template string directly with a data hash.
@@ -211,6 +237,8 @@ module Sourcerer
     private_class_method :load_render_data,
                          :resolve_converter,
                          :render_erb,
-                         :render_liquid
+                         :render_liquid,
+                         :render_in_engine,
+                         :liquid_registers
   end
 end

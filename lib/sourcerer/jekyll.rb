@@ -5,6 +5,7 @@ require_relative 'jekyll/monkeypatches'
 require_relative 'jekyll/liquid/file_system'
 require_relative 'jekyll/liquid/filters'
 require_relative 'jekyll/liquid/tags'
+require_relative 'jekyll/liquid/preserve_missing_variables'
 require 'jekyll-asciidoc'
 
 module Sourcerer
