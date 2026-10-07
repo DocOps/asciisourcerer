@@ -37,11 +37,11 @@ endif::[]
 :this_prod_name: {this_proj_name}
 // end::universal-settings[]
 :this_prod_vrsn_major: 0
-:this_prod_vrsn_minor: 5
+:this_prod_vrsn_minor: 6
 :this_prod_vrsn_majmin: {this_prod_vrsn_major}.{this_prod_vrsn_minor}
 :this_prod_vrsn_patch: 0
 :this_prod_vrsn: {this_prod_vrsn_majmin}.{this_prod_vrsn_patch}
-:next_prod_vrsn: 0.6.0
+:next_prod_vrsn: 0.7.0
 // end::global-settings[]
 // end::ai-prompt[]
 :toc: macro
@@ -823,7 +823,7 @@ Avoid exporting helper methods as accidental public API.
 === Generated Reference Docs
 
 Some reference documentation is generated from data rather than hand-written, so it can't drift from what the code actually does.
-`specs/data/docs-manifest.yml` lists each generation job: a Liquid (or ERB) template, a YAML data source, an output path, and optional `vars` to parameterize a shared template into multiple outputs.
+A manifest (`specs/data/docs-manifest.yml`) lists each generation job: a Liquid template, a YAML data source, an output path, and optional `vars` to parameterize a shared template into multiple outputs.
 
 For example, `specs/data/liquid-filters.yml` (the same source of truth used by the Liquid filter test suite; see <<tests>>) is rendered through `docs/templates/liquid-filters-ref.adoc.liquid` twice -- once grouped by filter category, once by filter source -- producing the partials committed at `lib/sourcerer/_docs/partials/liquid-filters-by-kind.adoc` and `liquid-filters-by-source.adoc`.
 These partials ship with the gem so downstream tools can `include::` them directly.
@@ -857,19 +857,27 @@ Run the PR/CI test suite:
 === Release Process and History
 
 AsciiSourcerer is intended to be the most primal gem in the DocOps Lab pool.
-As such, its development is less formal.
+As such, its release procedure is lighter and less formal.
 
-Each release is tested against all downstream gems and tools, but we are somewhat less formal about issue tracking and development branch management, at least in early stages.
+Each release is tested against all downstream gems and tools, but we are less concerned with issue tracking and development branch management, at least in these early stages.
 
-Standard release flow:
+Standard release flow differs from the general DocOps Lab conventions.
 
 . Update version in `lib/sourcerer/version.rb` and `README.adoc` attributes.
+
+. Test all changes using local clones of the latest released versions of these downstream gems:
+* link:{docopslab_src_www_url}/schemagraphy[DocOps/schemagraphy]
+* link:{docopslab_src_www_url}/lab[DocOps/lab]
+* link:{docopslab_src_www_url}/releasehx[DocOps/releasehx]
 
 . Commit to Git.
 
 . Push to GitHub.
 
-. Run `./scripts/build.sh` to validate the environment, run tests, and build the gem file to `pkg/`.
+. Run `./scripts/build.sh` to:
+.. validate the environment
+.. run tests, and
+.. build the gem file to `pkg/`
 
 . Tag the release in Git:
 +
