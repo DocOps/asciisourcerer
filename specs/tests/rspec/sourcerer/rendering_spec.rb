@@ -34,7 +34,9 @@ RSpec.describe Sourcerer::Rendering do
         data_object: 'data',
         attrs_source: nil,
         engine: 'liquid',
-        vars: {}
+        vars: {},
+        preserve_missing: false,
+        preserve_empty: false
       }
     ]
   end
@@ -93,6 +95,94 @@ RSpec.describe Sourcerer::Rendering do
       described_class.render_template(
         embed_template, data_file, out_file, engine: 'liquid', includes_load_paths: [tmpdir])
       expect(File.read(out_file)).to eq('Hello world')
+    end
+
+    it 'renders a missing liquid variable as empty string by default' do
+      liquid_template = write_file('missing.liquid', 'Hi {{ data.nope }}!')
+      described_class.render_template(liquid_template, data_file, out_file, engine: 'liquid')
+      expect(File.read(out_file)).to eq('Hi !')
+    end
+
+    it 'preserves a missing (nil) liquid variable verbatim, with no added whitespace, when preserve_missing is true' do
+      liquid_template = write_file('missing.liquid', 'Hi {{data.nope}}!')
+      described_class.render_template(liquid_template, data_file, out_file, engine: 'liquid', preserve_missing: true)
+      expect(File.read(out_file)).to eq('Hi {{data.nope}}!')
+    end
+
+    it 'preserves a tag verbatim with its filters when a filter turns nil into an empty result', :aggregate_failures do
+      # upcase (like many built-in filters) calls `.to_s` on its input, so a
+      # missing `data.nope` reaches our check as "" rather than nil -- this
+      # is preserve_empty's territory, not preserve_missing's, and the
+      # reconstructed tag must include the filter verbatim.
+      liquid_template = write_file('missing.liquid', 'Hi {{ data.nope | upcase }}!')
+      described_class.render_template(liquid_template, data_file, out_file, engine: 'liquid', preserve_missing: true)
+      expect(File.read(out_file)).to eq('Hi !')
+
+      described_class.render_template(liquid_template, data_file, out_file, engine: 'liquid', preserve_empty: true)
+      expect(File.read(out_file)).to eq('Hi {{ data.nope | upcase }}!')
+    end
+
+    it 'does not preserve an empty string when preserve_missing is true but preserve_empty is not' do
+      empty_data_file = write_file('empty-input.yml', "name: \"\"\n")
+      liquid_template = write_file('empty.liquid', 'Hi {{ data.name }}!')
+      described_class.render_template(
+        liquid_template, empty_data_file, out_file, engine: 'liquid', preserve_missing: true)
+      expect(File.read(out_file)).to eq('Hi !')
+    end
+
+    it 'does not preserve a present value when preserve_missing is true', :aggregate_failures do
+      liquid_template = write_file('present.liquid', 'Hi {{ data.name }}!')
+      described_class.render_template(liquid_template, data_file, out_file, engine: 'liquid', preserve_missing: true)
+      expect(File.read(out_file)).to eq('Hi world!')
+    end
+
+    it 'does not preserve 0 or false, only nil, when preserve_missing is true', :aggregate_failures do
+      zero_data_file = write_file('zero-input.yml', "zero: 0\nflag: false\n")
+      liquid_template = write_file('zero.liquid', "{{ data.zero }}\n{{ data.flag }}")
+      described_class.render_template(
+        liquid_template, zero_data_file, out_file, engine: 'liquid', preserve_missing: true)
+      expect(File.read(out_file)).to eq("0\nfalse")
+    end
+
+    it 'does not leak preserve_missing into a later render that does not ask for it', :aggregate_failures do
+      liquid_template = write_file('missing.liquid', 'Hi {{ data.nope }}!')
+      other_out_file = File.join(tmpdir, 'out', 'rendered-other.txt')
+      described_class.render_template(liquid_template, data_file, out_file, engine: 'liquid', preserve_missing: true)
+      described_class.render_template(liquid_template, data_file, other_out_file, engine: 'liquid')
+
+      expect(File.read(out_file)).to eq('Hi {{ data.nope }}!')
+      expect(File.read(other_out_file)).to eq('Hi !')
+    end
+
+    it 'preserves an empty string verbatim when preserve_empty is true' do
+      empty_data_file = write_file('empty-input.yml', "name: \"\"\n")
+      liquid_template = write_file('empty.liquid', 'Hi {{ data.name }}!')
+      described_class.render_template(
+        liquid_template, empty_data_file, out_file, engine: 'liquid', preserve_empty: true)
+      expect(File.read(out_file)).to eq('Hi {{ data.name }}!')
+    end
+
+    it 'preserves empty Array and Hash values the same as an empty string when preserve_empty is true',
+       :aggregate_failures do
+      empty_data_file = write_file('empty-collections.yml', "list: []\nmap: {}\n")
+      liquid_template = write_file('empty-collections.liquid', "{{ data.list }}\n{{ data.map }}")
+      described_class.render_template(
+        liquid_template, empty_data_file, out_file, engine: 'liquid', preserve_empty: true)
+      expect(File.read(out_file)).to eq("{{ data.list }}\n{{ data.map }}")
+    end
+
+    it 'does not preserve a nil value when preserve_empty is true but preserve_missing is not' do
+      liquid_template = write_file('missing.liquid', 'Hi {{ data.nope }}!')
+      described_class.render_template(liquid_template, data_file, out_file, engine: 'liquid', preserve_empty: true)
+      expect(File.read(out_file)).to eq('Hi !')
+    end
+
+    it 'preserves both missing and empty values when both options are true', :aggregate_failures do
+      mixed_data_file = write_file('mixed-input.yml', "blank: \"\"\n")
+      liquid_template = write_file('mixed.liquid', "{{ data.nope }}\n{{ data.blank }}")
+      described_class.render_template(
+        liquid_template, mixed_data_file, out_file, engine: 'liquid', preserve_missing: true, preserve_empty: true)
+      expect(File.read(out_file)).to eq("{{ data.nope }}\n{{ data.blank }}")
     end
   end
 

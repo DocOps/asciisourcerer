@@ -37,7 +37,7 @@ module Sourcerer
       # @param includes_load_paths [Array<String>] Paths to load includes from.
       # @param plugin_dirs [Array<String>] Paths to load plugins from.
       # @return [Jekyll::Site] The initialized fake Jekyll site object.
-      # rubocop:disable Lint/UnusedMethodArgument
+      # rubocop:disable-next Lint/UnusedMethodArgument
       def self.fake_site includes_load_paths: [], plugin_dirs: []
         # NOTE: plugin_dirs parameter is accepted but not yet implemented; reserved for future plugin loading
         ::Jekyll.logger.log_level = :error if ::Jekyll.logger.respond_to?(:log_level=)
@@ -72,7 +72,6 @@ module Sourcerer
 
         site
       end
-      # rubocop:enable Lint/UnusedMethodArgument
     end
   end
 end

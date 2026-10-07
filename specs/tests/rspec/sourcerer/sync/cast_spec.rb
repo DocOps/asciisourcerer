@@ -132,7 +132,7 @@ RSpec.describe Sourcerer::Sync::Cast do
         MD
         target = tmp_file('target_with_alternate.md', target_text)
         result = described_class.sync(prime_path, target)
-        expect(result.warnings).not_to include(match(/universal-intro/))
+        expect(result.warnings).not_to include(include('universal-intro'))
       end
     end
 
