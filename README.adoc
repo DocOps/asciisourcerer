@@ -833,6 +833,15 @@ Regenerate all manifest entries with:
 [.prompt]
  bundle exec rake generate:docs
 
+These same partials are also published to the `documentation` branch, under `partials/`.
+That branch holds only generated output -- no source code -- so it can be pulled directly (e.g. via raw.githubusercontent.com) by consumers who don't install the gem.
+Regenerate and locally commit an update to that branch with:
+
+[.prompt]
+ bundle exec rake generate:documentation
+
+This only commits locally; push with `git push -f origin documentation` after reviewing the result.
+
 [[tests]]
 === Tests
 
