@@ -36,6 +36,11 @@ namespace :generate do
       Sourcerer::Rendering.render_outputs([render_entry])
     end
   end
+
+  desc 'Regenerate and locally commit the documentation branch (does not push)'
+  task :documentation do
+    sh 'ruby scripts/build_docs.rb'
+  end
 end
 
 # The lib/sourcerer/_docs/ is generated, thus git-ignored. This enhances
