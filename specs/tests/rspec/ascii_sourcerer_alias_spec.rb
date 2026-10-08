@@ -40,8 +40,16 @@ RSpec.describe AsciiSourcerer do
       # Test deprecated top-level method delegation through both namespaces
       readme_path = File.expand_path('../../../README.adoc', __dir__)
 
-      sourcerer_attrs = Sourcerer.load_attributes(readme_path)
-      asciisourcerer_attrs = described_class.load_attributes(readme_path)
+      # Asciidoctor computes these from Time.now at parse time (unlike
+      # docdate/doctime/docdatetime, which come from the file's mtime), so
+      # the two independent parses below can legitimately disagree by a
+      # second if they straddle a clock tick. Excluded as noise unrelated
+      # to what this test verifies: that delegation produces an equivalent
+      # attribute set.
+      volatile_keys = %w[localdate localdatetime localtime localyear localmonth localday]
+
+      sourcerer_attrs = Sourcerer.load_attributes(readme_path).except(*volatile_keys)
+      asciisourcerer_attrs = described_class.load_attributes(readme_path).except(*volatile_keys)
 
       expect(asciisourcerer_attrs).to eq(sourcerer_attrs)
       expect(asciisourcerer_attrs['this_prod_vrsn']).to eq(Sourcerer::VERSION)
