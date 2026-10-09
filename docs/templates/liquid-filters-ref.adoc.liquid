@@ -15,6 +15,11 @@
 {%-     assign section_title = set.name | replace: '-', ' ' | capitalize | append: " Filters" %}
 {%-   endif %}
 :example-capition!:
+:toc: macro
+
+ifdef::env-github[]
+toc::[]
+endif::env-github[]
 
 [[{{ section_key }}]]
 == {{ section_title }}
