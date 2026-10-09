@@ -1,0 +1,3219 @@
+
+:example-capition!:
+:toc: macro
+
+ifdef::env-github[]
+toc::[]
+endif::env-github[]
+
+[[date-format]]
+== Date format Filters
+
+// tag::date-format[]
+[[filter__date_to_xml_schema,Date to XML Schema]]
+Date to XML Schema (`date_to_xml_schema`)::
++
+--
+Convert a Date into XML Schema (ISO 8601) format.
+
+[horizontal]
+Source::: Jekyll
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{{ "2008-11-07 1:07:54pm" | date_to_xmlschema }}
+----
+
+.Output
+[source,liquid]
+----
+2008-11-07T13:07:54-08:00
+----
+====
+--
+[[filter__date_to_rfc822,Date to RFC-822 Format]]
+Date to RFC-822 Format (`date_to_rfc822`)::
++
+--
+Convert a Date into the RFC-822 format used for RSS feeds.
+
+[horizontal]
+Source::: Jekyll
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{{ data.time | date_to_rfc822 }}
+----
+
+.Output
+[source,liquid]
+----
+Fri, 07 Nov 2008 13:07:54 -0800
+----
+====
+--
+[[filter__date_to_string,Date to String]]
+Date to String (`date_to_string`)::
++
+--
+Convert a date to short format.
+
+[horizontal]
+Source::: Jekyll
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{{ data.time | date_to_string }}
+----
+
+.Output
+[source,liquid]
+----
+07 Nov 2008
+----
+====
++
+====
+.Input
+[source,liquid]
+----
+{{ data.time | date_to_string: "ordinal", "US" }}
+----
+
+.Output
+[source,liquid]
+----
+Nov 7th, 2008
+----
+====
+--
+[[filter__date_to_long_string,Date to Long String]]
+Date to Long String (`date_to_long_string`)::
++
+--
+Format a date to long format.
+
+[horizontal]
+Source::: Jekyll
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{{ data.time | date_to_long_string }}
+----
+
+.Output
+[source,liquid]
+----
+07 November 2008
+----
+====
++
+====
+.Input
+[source,liquid]
+----
+{{ data.time | date_to_long_string: "ordinal" }}
+----
+
+.Output
+[source,liquid]
+----
+7th November 2008
+----
+====
+--
+[[filter__date,Date Format]]
+Date Format (`date`)::
++
+--
+Converts a timestamp into another date format, using the same format
+syntax as `strftime`.
+
+
+[horizontal]
+Source::: Shopify
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{{ data.time | date: "%Y-%m-%d" }}
+----
+
+.Output
+[source,liquid]
+----
+2008-11-07
+----
+====
+--
+// end::date-format[]
+
+
+[[array-select]]
+== Array select Filters
+
+// tag::array-select[]
+[[filter__where,Where]]
+Where (`where`)::
++
+--
+Select all the objects in an array where the key has the given value.
+
+[horizontal]
+Source::: Jekyll
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{% assign filtered = data.users | where:"level", 2 %}
+{{ filtered | size }}
+
+----
+
+.Output
+[source,liquid]
+----
+1
+----
+====
++
+====
+.Input
+[source,liquid]
+----
+{% assign member = data.users | where:"user","alice" %}
+{{ member[0] | jsonify }}
+
+----
+
+.Output
+[source,liquid]
+----
+{"user":"alice","level":1}
+----
+====
+--
+[[filter__where_exp,Where Expression]]
+Where Expression (`where_exp`)::
++
+--
+Select all the objects in an array where the expression is true.
+
+[horizontal]
+Source::: Jekyll
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{{ data.members | where_exp:"item",
+"item.grad_year == 2014" | jsonify }}
+
+----
+
+.Output
+[source,liquid]
+----
+[{"user":"andie","grad_year":2014,"projects":["fooman","barbaz"]},{"user":"lonnie","grad_year":2014,"projects":["fooman"]}]
+----
+====
++
+====
+.Input
+[source,liquid]
+----
+{{ data.members | where_exp:"item",
+"item.grad_year < 2014" | jsonify }}
+
+----
+
+.Output
+[source,liquid]
+----
+[{"user":"cindy","grad_year":2012,"projects":["fooman","foobar"]}]
+----
+====
++
+====
+.Input
+[source,liquid]
+----
+{{ data.members | where_exp:"item",
+"item.projects contains 'barbaz'" | jsonify }}
+
+----
+
+.Output
+[source,liquid]
+----
+[{"user":"andie","grad_year":2014,"projects":["fooman","barbaz"]}]
+----
+====
+--
+[[filter__sample,Sample]]
+Sample (`sample`)::
++
+--
+Pick a random value from an array. Optionally, pick multiple values.
+
+[horizontal]
+Source::: Jekyll
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{{ site.pages | sample }}
+----
+====
++
+====
+.Input
+[source,liquid]
+----
+{{ site.pages | sample: 2 }}
+----
+====
+--
+[[filter__first,First]]
+First (`first`)::
++
+--
+Returns the first item of an array.
+
+[horizontal]
+Source::: Shopify
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{{ "Ground control to Major Tom." | split: " " | first }}
+----
+
+.Output
+[source,liquid]
+----
+Ground
+----
+====
+--
+[[filter__last,Last]]
+Last (`last`)::
++
+--
+Returns the last item of an array.
+
+[horizontal]
+Source::: Shopify
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{{ "Ground control to Major Tom." | split: " " | last }}
+----
+
+.Output
+[source,liquid]
+----
+Tom.
+----
+====
+--
+// end::array-select[]
+
+
+[[array-organizing]]
+== Array organizing Filters
+
+// tag::array-organizing[]
+[[filter__group_by,Group By]]
+Group By (`group_by`)::
++
+--
+Group an array's items by a given property.
+
+[horizontal]
+Source::: Jekyll
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{% assign grouped = data.members | group_by:"grad_year" | first %}
+{{ grouped.name }}
+
+----
+
+.Output
+[source,liquid]
+----
+2014
+----
+====
+--
+[[filter__group_by_exp,Group By Expression]]
+Group By Expression (`group_by_exp`)::
++
+--
+Group an array's items using a Liquid expression.
+
+[horizontal]
+Source::: Jekyll
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{{ data.members | group_by_exp: "item", "item.grad_year" | map: "name" | join: "," }}
+----
+
+.Output
+[source,liquid]
+----
+2014,2012
+----
+====
+--
+[[filter__sort,Sort]]
+Sort (`sort`)::
++
+--
+Sort an array. Optional arguments for hashes
+1. property name
+2. nils order (_first_ or _last_).
+
+
+[horizontal]
+Source::: Jekyll
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{{ page.tags | sort | inspect }}
+----
+
+.Output
+[source,liquid]
+----
+[&quot;Seattle&quot;, &quot;Spokane&quot;, &quot;Tacoma&quot;]
+----
+====
++
+====
+.Input
+[source,liquid]
+----
+{{ site.posts | sort: "author" }}
+----
+====
++
+====
+.Input
+[source,liquid]
+----
+{{ site.pages | sort: "title", "last" }}
+----
+====
+--
+[[filter__reverse,Reverse]]
+Reverse (`reverse`)::
++
+--
+Reverses the order of the items in an array. Cannot reverse a string
+directly; split it into an array first.
+
+
+[horizontal]
+Source::: Shopify
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{% assign arr = "apples, oranges, peaches, plums" | split: ", " %}
+{{ arr | reverse | join: ", " }}
+
+----
+
+.Output
+[source,liquid]
+----
+plums, peaches, oranges, apples
+----
+====
+--
+// end::array-organizing[]
+
+
+[[string-escape]]
+== String escape Filters
+
+// tag::string-escape[]
+[[filter__xml_escape,XML Escape]]
+XML Escape (`xml_escape`)::
++
+--
+Escape some text for use in XML.
+
+[horizontal]
+Source::: Jekyll
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{{ "<strong>some text</strong>" | xml_escape }}
+----
+
+.Output
+[source,liquid]
+----
+&lt;strong&gt;some text&lt;/strong&gt;
+----
+====
+--
+[[filter__cgi_escape,CGI Escape]]
+CGI Escape (`cgi_escape`)::
++
+--
+CGI escape a string for use in a URL.
+Replaces any special characters with appropriate `%XX` replacements.
+CGI escape normally replaces a space with a plus `+` sign.
+
+
+[horizontal]
+Source::: Jekyll
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{{ "foo, bar; baz?" | cgi_escape }}
+----
+
+.Output
+[source,liquid]
+----
+foo%2C+bar%3B+baz%3F
+----
+====
+--
+[[filter__uri_escape,URI Escape]]
+URI Escape (`uri_escape`)::
++
+--
+Percent encodes any special characters in a URI.
+URI escape normally replaces a space with `%20`.
+link:https://en.wikipedia.org/wiki/Percent-encoding#Types_of_URI_characters[Reserved characters]
+will not be escaped.
+
+
+[horizontal]
+Source::: Jekyll
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{{ "http://foo.com/?q=foo, \bar?" | uri_escape }}
+----
+
+.Output
+[source,liquid]
+----
+http://foo.com/?q=foo,%20%5Cbar?
+----
+====
+--
+// end::string-escape[]
+
+
+[[string-analysis]]
+== String analysis Filters
+
+// tag::string-analysis[]
+[[filter__number_of_words,Number of Words]]
+Number of Words (`number_of_words`)::
++
+--
+Count the number of words in a text.
+
+[horizontal]
+Source::: Jekyll
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{{ page.content | number_of_words }}
+----
+
+.Output
+[source,liquid]
+----
+3
+----
+====
+--
+[[filter__match,Pattern Match]]
+Pattern Match (`match`)::
++
+--
+Returns  of string or number matches pattern.
+
+[horizontal]
+Source::: AsciiSourcerer
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{% assign matched = "testword" | match: "^.*word$" %}
+{% if matched %}It matched!{% endif %}
+
+----
+
+.Output
+[source,liquid]
+----
+It matched!
+----
+====
+--
+// end::string-analysis[]
+
+
+[[object-conversion]]
+== Object conversion Filters
+
+// tag::object-conversion[]
+[[filter__array_to_sentence_string,Array to Sentence]]
+Array to Sentence (`array_to_sentence_string`)::
++
+--
+Convert an array into a sentence. Useful for listing tags.
+Optional argument for connector.
+
+
+[horizontal]
+Source::: Jekyll
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{{ tags_array | array_to_sentence_string }}
+----
+
+.Output
+[source,liquid]
+----
+foo, bar, and baz
+----
+====
++
+====
+.Input
+[source,liquid]
+----
+{{ tags_array | array_to_sentence_string: "or" }}
+----
+
+.Output
+[source,liquid]
+----
+foo, bar, or baz
+----
+====
+--
+[[filter__jsonify,Data To JSON]]
+Data To JSON (`jsonify`)::
++
+--
+Convert Hash or Array to JSON.
+
+[horizontal]
+Source::: Jekyll
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{{ tags_array | jsonify }}
+----
+
+.Output
+[source,liquid]
+----
+["foo","bar","baz"]
+----
+====
+--
+[[filter__to_integer,To Integer]]
+To Integer (`to_integer`)::
++
+--
+Convert a string or boolean to integer.
+
+[horizontal]
+Source::: Jekyll
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{{ true | to_integer }}
+----
+
+.Output
+[source,liquid]
+----
+1
+----
+====
++
+====
+.Input
+[source,liquid]
+----
+{% assign five = "5" | to_integer %}
+{% if five == 5 %}Samesies!{% endif %}
+
+----
+
+.Output
+[source,liquid]
+----
+Samesies!
+----
+====
++
+====
+.Input
+[source,liquid]
+----
+{{ "five" | to_integer }}
+----
+
+.Output
+[source,liquid]
+----
+0
+----
+====
+--
+[[filter__join,Join]]
+Join (`join`)::
++
+--
+Combines the items in an array into a single string, using the argument as a separator.
+
+[horizontal]
+Source::: Shopify
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{% assign beatles = "John, Paul, George, Ringo" | split: ", " %}
+{{ beatles | join: " and " }}
+
+----
+
+.Output
+[source,liquid]
+----
+John and Paul and George and Ringo
+----
+====
+--
+[[filter__map,Map]]
+Map (`map`)::
++
+--
+Creates an array of values by extracting the values of a named property from an array of objects.
+
+[horizontal]
+Source::: Shopify
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{{ data.members | map: "user" | join: "," }}
+
+----
+
+.Output
+[source,liquid]
+----
+andie,lonnie,cindy
+----
+====
+--
+[[filter__slice,Slice]]
+Slice (`slice`)::
++
+--
+Returns a substring or array slice, starting at the index given by the
+first argument. An optional second argument gives the length. Negative
+indices count from the end.
+
+
+[horizontal]
+Source::: Shopify
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{{ "Liquid" | slice: 0 }}
+----
+
+.Output
+[source,liquid]
+----
+L
+----
+====
++
+====
+.Input
+[source,liquid]
+----
+{{ "Liquid" | slice: 2, 3 }}
+----
+
+.Output
+[source,liquid]
+----
+qui
+----
+====
++
+====
+.Input
+[source,liquid]
+----
+{{ "Liquid" | slice: -3, 2 }}
+----
+
+.Output
+[source,liquid]
+----
+ui
+----
+====
+--
+[[filter__split,Split]]
+Split (`split`)::
++
+--
+Divides a string into an array using the argument as a separator.
+Commonly used to convert delimited text into an array.
+
+
+[horizontal]
+Source::: Shopify
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{% assign beatles = "John, Paul, George, Ringo" | split: ", " %}
+{{ beatles | join: "|" }}
+
+----
+
+.Output
+[source,liquid]
+----
+John|Paul|George|Ringo
+----
+====
+--
+[[filter__to_cli_args,Convert to CLI Arguments]]
+Convert to CLI Arguments (`to_cli_args`)::
++
+--
+Transform a Hash into a string of CLI-formatted arguments.
+Accepts an optional template name to format the output.
+See `parameters` section for all available templates and their output formats.
+When no template is specified, defaults to `long_space` format.
+Arguments are joined with a space by default; can be customized via delimiter parameter.
+
+
+[horizontal]
+Source::: AsciiSourcerer
+
+[vertical]
+Examples:::
++
+.Default (long_space) format
+====
+.Input
+[source,liquid]
+----
+{{ my_flat_hash | to_cli_args }}
+----
+
+.Output
+[source,liquid]
+----
+--key1 valuu_one --key2 val_two --key3 third value
+----
+====
++
+.Long equals format
+====
+.Input
+[source,liquid]
+----
+{{ my_flat_hash | to_cli_args: "long_equals" }}
+----
+
+.Output
+[source,liquid]
+----
+--key1=valuu_one --key2=val_two --key3=third value
+----
+====
++
+.Single-letter flags with values
+====
+.Input
+[source,liquid]
+----
+{{ cli_flags_hash | to_cli_args: "short_space" }}
+----
+
+.Output
+[source,liquid]
+----
+-k valuu_one -v val_two -o third value
+----
+====
++
+.Positional arguments only
+====
+.Input
+[source,liquid]
+----
+{{ my_flat_hash | to_cli_args: "positional" }}
+----
+
+.Output
+[source,liquid]
+----
+valuu_one val_two third value
+----
+====
++
+.Environment variable format (uppercase keys)
+====
+.Input
+[source,liquid]
+----
+{{ my_flat_hash | to_cli_args: "env_arg" }}
+----
+
+.Output
+[source,liquid]
+----
+KEY1=valuu_one KEY2=val_two KEY3=third value
+----
+====
++
+.Key=value format
+====
+.Input
+[source,liquid]
+----
+{{ my_flat_hash | to_cli_args: "keyval" }}
+----
+
+.Output
+[source,liquid]
+----
+key1=valuu_one key2=val_two key3=third value
+----
+====
+--
+[[filter__to_yaml,Data objects to YAML]]
+Data objects to YAML (`to_yaml`)::
++
+--
+Turn any parameter or data object into YAML format.
+
+[horizontal]
+Source::: AsciiSourcerer
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{{ my_flat_hash | to_yaml }}
+----
+
+.Output
+[source,liquid]
+----
+---
+key1: valuu_one
+key2: val_two
+key3: third value
+
+----
+====
++
+====
+.Input
+[source,liquid]
+----
+{{ my_flat_hash | to_yaml: "flow" }}
+----
+
+.Output
+[source,liquid]
+----
+{key1: "valuu_one", key2: "val_two", key3: "third value"}
+----
+====
++
+====
+.Input
+[source,liquid]
+----
+{{ page.tags | to_yaml }}
+----
+
+.Output
+[source,liquid]
+----
+---
+- Seattle
+- Tacoma
+- Spokane
+
+----
+====
++
+====
+.Input
+[source,liquid]
+----
+{{ page.tags | to_yaml: "flow" }}
+----
+
+.Output
+[source,liquid]
+----
+["Seattle", "Tacoma", "Spokane"]
+----
+====
++
+====
+.Input
+[source,liquid]
+----
+{{ page.tags | to_yaml: "flow", "quotes" }}
+----
+
+.Output
+[source,liquid]
+----
+["Seattle", "Tacoma", "Spokane"]
+----
+====
+--
+[[filter__to_json,Data objects to JSON]]
+Data objects to JSON (`to_json`)::
++
+--
+Turn any parameter or data object into JSON format.
+
+[horizontal]
+Source::: AsciiSourcerer
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{{ my_flat_hash | to_json }}
+----
+
+.Output
+[source,liquid]
+----
+{"key1":"valuu_one","key2":"val_two","key3":"third value"}
+
+----
+====
++
+====
+.Input
+[source,liquid]
+----
+{{ page.tags | to_json }}
+----
+
+.Output
+[source,liquid]
+----
+["Seattle","Tacoma","Spokane"]
+
+----
+====
++
+====
+.Input
+[source,liquid]
+----
+{{ odd_keys_hash | to_json }}
+----
+
+.Output
+[source,liquid]
+----
+{"key 1":"valuu_one","$key2":"val_two","key:3":"third value"}
+
+----
+====
+--
+// end::object-conversion[]
+
+
+[[string-conversion]]
+== String conversion Filters
+
+// tag::string-conversion[]
+[[filter__slugify,Slugify]]
+Slugify (`slugify`)::
++
+--
+Convert a string into a lowercase URL "slug".
+
+NOTE: This is not the Jekyll version.
+
+
+[horizontal]
+Source::: AsciiSourcerer
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{{ "The _config.yml file" | slugify }}
+----
+
+.Output
+[source,liquid]
+----
+the-config-yml-file
+----
+====
++
+====
+.Input
+[source,liquid]
+----
+{{ "The _config.yml file" | slugify: "_" }}
+----
+
+.Output
+[source,liquid]
+----
+the_config_yml_file
+----
+====
+--
+[[filter__normalize_whitespace,Normalize Whitespace]]
+Normalize Whitespace (`normalize_whitespace`)::
++
+--
+Replace any occurrence of whitespace with a single space.
+
+[horizontal]
+Source::: Jekyll
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{{ "a    b" | normalize_whitespace }}
+----
+
+.Output
+[source,liquid]
+----
+a b
+----
+====
+--
+[[filter__capitalize,Capitalize]]
+Capitalize (`capitalize`)::
++
+--
+Capitalizes the first character of a string and downcases the rest. Only the first character is affected, so later words are not capitalized.
+
+[horizontal]
+Source::: Shopify
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{{ "my GREAT title" | capitalize }}
+----
+
+.Output
+[source,liquid]
+----
+My great title
+----
+====
+--
+[[filter__downcase,Downcase]]
+Downcase (`downcase`)::
++
+--
+Makes each character in a string lowercase.
+
+[horizontal]
+Source::: Shopify
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{{ "Parker Moore" | downcase }}
+----
+
+.Output
+[source,liquid]
+----
+parker moore
+----
+====
+--
+[[filter__escape,Escape]]
+Escape (`escape`)::
++
+--
+Escapes a string's HTML-unsafe characters (so it can safely be embedded in HTML markup).
+
+[horizontal]
+Source::: Shopify
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{{ "Have you read 'James & the Giant Peach'?" | escape }}
+----
+
+.Output
+[source,liquid]
+----
+Have you read &#39;James &amp; the Giant Peach&#39;?
+----
+====
+--
+[[filter__escape_once,Escape Once]]
+Escape Once (`escape_once`)::
++
+--
+Escapes a string's HTML-unsafe characters without double-escaping entities that are already escaped.
+
+[horizontal]
+Source::: Shopify
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{{ "1 < 2 & 3" | escape_once }}
+----
+
+.Output
+[source,liquid]
+----
+1 &lt; 2 &amp; 3
+----
+====
++
+====
+.Input
+[source,liquid]
+----
+{{ "1 &lt; 2 &amp; 3" | escape_once }}
+----
+
+.Output
+[source,liquid]
+----
+1 &lt; 2 &amp; 3
+----
+====
+--
+[[filter__newline_to_br,Newline to Break Tag]]
+Newline to Break Tag (`newline_to_br`)::
++
+--
+Inserts an HTML line break (`<br />`) in front of each newline in a string.
+
+[horizontal]
+Source::: Shopify
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{% capture s %}Hello
+there{% endcapture %}{{ s | newline_to_br }}
+
+----
+
+.Output
+[source,liquid]
+----
+Hello<br />
+there
+----
+====
+--
+[[filter__remove,Remove]]
+Remove (`remove`)::
++
+--
+Removes every occurrence of the specified substring from a string.
+
+[horizontal]
+Source::: Shopify
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{{ "I strained to see the train through the rain" | remove: "rain" }}
+----
+
+.Output
+[source,liquid]
+----
+I sted to see the t through the 
+----
+====
+--
+[[filter__remove_first,Remove First]]
+Remove First (`remove_first`)::
++
+--
+Removes only the first occurrence of the specified substring from a string.
+
+[horizontal]
+Source::: Shopify
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{{ "I strained to see the train through the rain" | remove_first: "rain" }}
+----
+
+.Output
+[source,liquid]
+----
+I sted to see the train through the rain
+----
+====
+--
+[[filter__remove_last,Remove Last]]
+Remove Last (`remove_last`)::
++
+--
+Removes the last instance of a substring from a string.
+
+(This filter duplicates Shopify's `remove_last` filter.)
+
+
+[horizontal]
+Source::: AsciiSourcerer
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{{ "Ground control to Major Tom." | remove_last: "o" }}
+----
+
+.Output
+[source,liquid]
+----
+Ground control to Major Tm.
+----
+====
+--
+[[filter__replace,Replace]]
+Replace (`replace`)::
++
+--
+Replaces every occurrence of the first argument in a string with the second argument.
+
+[horizontal]
+Source::: Shopify
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{{ "Take my protein pills and put my helmet on" | replace: "my", "your" }}
+----
+
+.Output
+[source,liquid]
+----
+Take your protein pills and put your helmet on
+----
+====
+--
+[[filter__replace_first,Replace First]]
+Replace First (`replace_first`)::
++
+--
+Replaces only the first occurrence of the first argument in a string with the second argument.
+
+[horizontal]
+Source::: Shopify
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{{ "Take my protein pills and put my helmet on" | replace_first: "my", "your" }}
+----
+
+.Output
+[source,liquid]
+----
+Take your protein pills and put my helmet on
+----
+====
+--
+[[filter__replace_last,Replace Last]]
+Replace Last (`replace_last`)::
++
+--
+Replaces the last instance of a substring in a string with a replacement.
+
+(This filter duplicates Shopify's `replace_last` filter.)
+
+
+[horizontal]
+Source::: AsciiSourcerer
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{{ "Ground control to Major Tom." | replace_last: "o", "0" }}
+----
+
+.Output
+[source,liquid]
+----
+Ground control to Major T0m.
+----
+====
+--
+[[filter__squish,Squish]]
+Squish (`squish`)::
++
+--
+Strips leading and trailing whitespace and collapses interior runs of
+whitespace to a single space.
+
+(This filter duplicates Liquid 5's `squish` filter.)
+
+
+[horizontal]
+Source::: AsciiSourcerer
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{{ "  A string that   is obviously  longer than 25 characters  " | squish }}
+----
+
+.Output
+[source,liquid]
+----
+A string that is obviously longer than 25 characters
+----
+====
+--
+[[filter__rstrip,Right Strip]]
+Right Strip (`rstrip`)::
++
+--
+Removes whitespace (tabs, spaces, newlines) from the right side of a
+string. Does not affect spaces between words.
+
+
+[horizontal]
+Source::: Shopify
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{{ "   So much room   " | rstrip }}!
+----
+
+.Output
+[source,liquid]
+----
+   So much room!
+----
+====
+--
+[[filter__strip,Strip]]
+Strip (`strip`)::
++
+--
+Removes whitespace (tabs, spaces, newlines) from both sides of a
+string. Does not affect spaces between words.
+
+
+[horizontal]
+Source::: Shopify
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{{ "   So much room   " | strip }}!
+----
+
+.Output
+[source,liquid]
+----
+So much room!
+----
+====
+--
+[[filter__strip_html,Strip HTML]]
+Strip HTML (`strip_html`)::
++
+--
+Removes any HTML tags from a string.
+
+[horizontal]
+Source::: Shopify
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{{ "Have <em>you</em> read <strong>Ulysses</strong>?" | strip_html }}
+----
+
+.Output
+[source,liquid]
+----
+Have you read Ulysses?
+----
+====
+--
+[[filter__strip_newlines,Strip Newlines]]
+Strip Newlines (`strip_newlines`)::
++
+--
+Removes any newline characters from a string.
+
+[horizontal]
+Source::: Shopify
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{% capture s %}Hello
+there{% endcapture %}{{ s | strip_newlines }}
+
+----
+
+.Output
+[source,liquid]
+----
+Hellothere
+----
+====
+--
+[[filter__truncatewords,Truncate Words]]
+Truncate Words (`truncatewords`)::
++
+--
+Shortens a string to the given number of words. If shortened, an
+ellipsis (`...`) is appended; pass a second argument to use a
+different (or no) ellipsis.
+
+
+[horizontal]
+Source::: Shopify
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{{ "Ground control to Major Tom." | truncatewords: 3 }}
+----
+
+.Output
+[source,liquid]
+----
+Ground control to...
+----
+====
+--
+[[filter__upcase,Upcase]]
+Upcase (`upcase`)::
++
+--
+Makes each character in a string uppercase.
+
+[horizontal]
+Source::: Shopify
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{{ "Parker Moore" | upcase }}
+----
+
+.Output
+[source,liquid]
+----
+PARKER MOORE
+----
+====
+--
+[[filter__wrap,Wrap]]
+Wrap (`wrap`)::
++
+--
+
+
+[horizontal]
+Source::: AsciiSourcerer
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{{ "A string that is obviously longer than 25 characters" | wrap: 25 }}
+----
+
+.Output
+[source,liquid]
+----
+A string that is
+obviously longer than 25
+characters
+
+----
+====
+--
+[[filter__commentwrap,Comment Wrap]]
+Comment Wrap (`commentwrap`)::
++
+--
+
+
+[horizontal]
+Source::: AsciiSourcerer
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{{ comment_text | commentwrap: 25, "// " }}
+----
+
+.Output
+[source,liquid]
+----
+// A string that is
+// obviously longer than 25
+// characters
+
+----
+====
++
+====
+.Input
+[source,liquid]
+----
+{{ comment_text | commentwrap: 25, "xml" }}
+----
+
+.Output
+[source,liquid]
+----
+<!-- A string that is
+obviously longer than 25
+characters -->
+
+----
+====
++
+====
+.Input
+[source,liquid]
+----
+{{ comment_text | commentwrap: 25, "/*|*/" }}
+----
+
+.Output
+[source,liquid]
+----
+/* A string that is
+obviously longer than 25
+characters
+*/
+
+----
+====
+--
+[[filter__relative_url,Relative URL]]
+Relative URL (`relative_url`)::
++
+--
+Prepend `baseurl` config value to the input to convert a URL path into a relative URL.
+This is recommended for a site that is hosted on a subpath of a domain.
+
+NOTE: Requires registration of a `site.baseurl` object outside `jekyll build` contexts.
+
+
+[horizontal]
+Source::: Jekyll
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{{ "test-path" | relative_url }}
+----
+
+.Output
+[source,liquid]
+----
+/docs/test-path
+----
+====
+--
+[[filter__absolute_url,Absolute URL]]
+Absolute URL (`absolute_url`)::
++
+--
+Prepend `url` and `baseurl` values to the input to convert a URL path to an absolute URL.
+
+NOTE: Requires registration of `site.baseurl` and `site.url` objects outside `jekyll build` contexts.
+
+
+[horizontal]
+Source::: Jekyll
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{{ "test-path" | absolute_url }}
+----
+
+.Output
+[source,liquid]
+----
+https://example.com/docs/test-path
+----
+====
+--
+[[filter__markdownify,Markdownify]]
+Markdownify (`markdownify`)::
++
+--
+Converts a Markdown string to HTML.
+
+[horizontal]
+Source::: Jekyll
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{{ "Test with **bold** and a [link](https://example.com)." | markdownify }}
+----
+
+.Output
+[source,liquid]
+----
+<p>Test with <strong>bold</strong> and a <a href="https://example.com">link</a>.</p>
+----
+====
+--
+[[filter__smartify,Smartify]]
+Smartify (`smartify`)::
++
+--
+Convert "quotes" into &ldquo;smart quotes.&rdquo;
+
+[horizontal]
+Source::: Jekyll
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{{ 'He said, "Hello!"' | smartify }}
+
+----
+
+.Output
+[source,liquid]
+----
+He said, “Hello!”
+----
+====
+--
+[[filter__sassify,Sassify]]
+Sassify (`sassify`)::
++
+--
+Convert an indented-syntax Sass string into CSS.
+
+[horizontal]
+Source::: Jekyll
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{{ sass_text | sassify }}
+
+----
+
+.Output
+[source,liquid]
+----
+body {
+  color: red;
+}
+
+----
+====
+--
+[[filter__scssify,Scssify]]
+Scssify (`scssify`)::
++
+--
+Convert a SCSS-formatted (brace/semicolon syntax) string into CSS.
+
+[horizontal]
+Source::: Jekyll
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{{ scss_text | scssify }}
+
+----
+
+.Output
+[source,liquid]
+----
+body {
+  color: red;
+}
+
+----
+====
+--
+[[filter__asciidocify,AsciiDocify]]
+AsciiDocify (`asciidocify`)::
++
+--
+Convert an AsciiDoc string to HTML, with or without paragraphing.
+
+[horizontal]
+Source::: jekyll-asciidoc
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{{ "Test with *bold* and a http://example.com[link]." | asciidocify }}
+
+----
+
+.Output
+[source,liquid]
+----
+<div class="paragraph">
+<p>Test with <strong>bold</strong> and a <a href="http://example.com">link</a>.</p>
+</div>
+
+----
+====
++
+====
+.Input
+[source,liquid]
+----
+{{ "Test with *bold* and a http://example.com[link]." | asciidocify: "inline" }}
+
+----
+
+.Output
+[source,liquid]
+----
+Test with <strong>bold</strong> and a <a href="http://example.com">link</a>.
+
+----
+====
+--
+// end::string-conversion[]
+
+
+[[array-management]]
+== Array management Filters
+
+// tag::array-management[]
+[[filter__push,Push]]
+Push (`push`)::
++
+--
+Insert an item at the end of an array
+
+
+[horizontal]
+Source::: Jekyll
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{{ page.tags | push: "Spokane" | inspect }}
+----
+
+.Output
+[source,liquid]
+----
+[&quot;Seattle&quot;, &quot;Tacoma&quot;, &quot;Spokane&quot;, &quot;Spokane&quot;]
+----
+====
+--
+[[filter__pop,Pop]]
+Pop (`pop`)::
++
+--
+Remove an item from the end of an array
+
+
+[horizontal]
+Source::: Jekyll
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{{ page.tags | pop | inspect }}
+----
+
+.Output
+[source,liquid]
+----
+[&quot;Seattle&quot;, &quot;Tacoma&quot;]
+----
+====
+--
+[[filter__shift,Shift]]
+Shift (`shift`)::
++
+--
+Remove an item from the beginning of an array
+
+
+[horizontal]
+Source::: Jekyll
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{{ page.tags | shift | inspect }}
+----
+
+.Output
+[source,liquid]
+----
+[&quot;Tacoma&quot;, &quot;Spokane&quot;]
+----
+====
+--
+[[filter__unshift,Unshift]]
+Unshift (`unshift`)::
++
+--
+Insert an item at the beginning of an array
+
+
+[horizontal]
+Source::: Jekyll
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{{ page.tags | unshift: "Olympia" | inspect }}
+----
+
+.Output
+[source,liquid]
+----
+[&quot;Olympia&quot;, &quot;Seattle&quot;, &quot;Tacoma&quot;, &quot;Spokane&quot;]
+----
+====
+--
+[[filter__compact,Compact]]
+Compact (`compact`)::
++
+--
+Removes any `nil` values from an array.
+
+[horizontal]
+Source::: Shopify
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{% assign compacted = mixed_array | compact %}
+{{ compacted | join: "," }}
+
+----
+
+.Output
+[source,liquid]
+----
+a,b,c
+----
+====
+--
+[[filter__concat,Concatenate]]
+Concatenate (`concat`)::
++
+--
+Concatenates (joins together) multiple arrays. The resulting array contains all the items from the input arrays.
+
+[horizontal]
+Source::: Shopify
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{% assign fruits = "apples, oranges" | split: ", " %}
+{% assign veggies = "carrots, turnips" | split: ", " %}
+{{ fruits | concat: veggies | join: "," }}
+
+----
+
+.Output
+[source,liquid]
+----
+apples,oranges,carrots,turnips
+----
+====
+--
+[[filter__uniq,Uniq]]
+Uniq (`uniq`)::
++
+--
+Removes any duplicate items from an array, preserving the first occurrence's order.
+
+[horizontal]
+Source::: Shopify
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{% assign arr = "ants, bugs, bees, bugs, ants" | split: ", " %}
+{{ arr | uniq | join: "," }}
+
+----
+
+.Output
+[source,liquid]
+----
+ants,bugs,bees
+----
+====
+--
+[[filter__store_list_concat,Metastore list concat]]
+Metastore list concat (`store_list_concat`)::
++
+--
+Concatenates each Array-formatted value of the same-named property across all nodes in an Array of Hashes (Metastore).
+Accepts an Array of Hashes and the keyname of a property to collect from.
+
+
+[horizontal]
+Source::: AsciiSourcerer
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{{ data.metastore | store_list_concat: "children" | jsonify }}
+
+----
+
+.Output
+[source,liquid]
+----
+["child1","child2","child3","child4","child5","child6"]
+----
+====
+--
+[[filter__store_list_dupes,Metastore list duplicates]]
+Metastore list duplicates (`store_list_dupes`)::
++
+--
+Returns a list of duplicate items among multiple Arrays across multiple same-named properties in an Array of Hashes (Metastore).
+Accepts an Array of Hashes and the keyname of a Scalar property to check; returns the names of duplicate properties.
+
+
+[horizontal]
+Source::: AsciiSourcerer
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{{ data.metastore | store_list_dupes: "children" | jsonify }}
+
+----
+
+.Output
+[source,liquid]
+----
+["child1"]
+----
+====
+--
+// end::array-management[]
+
+
+[[object-analysis]]
+== Object analysis Filters
+
+// tag::object-analysis[]
+[[filter__inspect,Inspect]]
+Inspect (`inspect`)::
++
+--
+Convert an object into its String representation for debugging.
+Overrides Jekyll's `inspect` filter, adding an optional `format` argument:
+`html` (default) reproduces Jekyll's own behavior exactly (an HTML-escaped
+`Object#inspect` string, quotes become `&quot;`); `yaml` and `json` render
+the object in those formats instead.
+
+
+[horizontal]
+Source::: AsciiSourcerer
+
+[vertical]
+Examples:::
++
+.Default (html) format, matches Jekyll's inspect
+====
+.Input
+[source,liquid]
+----
+{{ tags_array | inspect }}
+----
+
+.Output
+[source,liquid]
+----
+[&quot;foo&quot;, &quot;bar&quot;, &quot;baz&quot;]
+----
+====
++
+.YAML format
+====
+.Input
+[source,liquid]
+----
+{{ tags_array | inspect: "yaml" }}
+
+----
+
+.Output
+[source,liquid]
+----
+---
+- foo
+- bar
+- baz
+
+----
+====
++
+.JSON format
+====
+.Input
+[source,liquid]
+----
+{{ tags_array | inspect: "json" }}
+----
+
+.Output
+[source,liquid]
+----
+["foo","bar","baz"]
+----
+====
+--
+[[filter__size,Size]]
+Size (`size`)::
++
+--
+Returns the number of characters in a string, or the number of items in an array.
+
+[horizontal]
+Source::: Shopify
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{{ "Ground control to Major Tom." | size }}
+----
+
+.Output
+[source,liquid]
+----
+28
+----
+====
+--
+[[filter__holds_liquid,Holds Liquid]]
+Holds Liquid (`holds_liquid`)::
++
+--
+Returns true if a snippet of text contains Liquid markup tags.
+
+[horizontal]
+Source::: AsciiSourcerer
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{{ liquidy_text | holds_liquid }}
+
+----
+
+.Output
+[source,liquid]
+----
+true
+----
+====
++
+====
+.Input
+[source,liquid]
+----
+{{ "This is just text." | holds_liquid }}
+
+----
+
+.Output
+[source,liquid]
+----
+false
+----
+====
+--
+// end::object-analysis[]
+
+
+[[math]]
+== Math Filters
+
+// tag::math[]
+[[filter__abs,Absolute Value]]
+Absolute Value (`abs`)::
++
+--
+Returns the absolute value of a number.
+
+[horizontal]
+Source::: Shopify
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{{ -17 | abs }}
+----
+
+.Output
+[source,liquid]
+----
+17
+----
+====
++
+====
+.Input
+[source,liquid]
+----
+{{ "-19.86" | abs }}
+----
+
+.Output
+[source,liquid]
+----
+19.86
+----
+====
+--
+[[filter__at_least,At Least]]
+At Least (`at_least`)::
++
+--
+Limits a number to a minimum value; returns the input unchanged if it's already at or above the minimum.
+
+[horizontal]
+Source::: Shopify
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{{ 4 | at_least: 5 }}
+----
+
+.Output
+[source,liquid]
+----
+5
+----
+====
++
+====
+.Input
+[source,liquid]
+----
+{{ 4 | at_least: 3 }}
+----
+
+.Output
+[source,liquid]
+----
+4
+----
+====
+--
+[[filter__at_most,At Most]]
+At Most (`at_most`)::
++
+--
+Limits a number to a maximum value; returns the input unchanged if it's already at or below the maximum.
+
+[horizontal]
+Source::: Shopify
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{{ 4 | at_most: 5 }}
+----
+
+.Output
+[source,liquid]
+----
+4
+----
+====
++
+====
+.Input
+[source,liquid]
+----
+{{ 4 | at_most: 3 }}
+----
+
+.Output
+[source,liquid]
+----
+3
+----
+====
+--
+[[filter__sum,Sum]]
+Sum (`sum`)::
++
+--
+Sums a numeric array, or an array of Hashes at the given property.
+
+(This filter duplicates Shopify's `sum` filter.)
+
+
+[horizontal]
+Source::: AsciiSourcerer
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{{ data.members | sum: "grad_year" }}
+----
+
+.Output
+[source,liquid]
+----
+6040
+----
+====
+--
+[[filter__ceil,Ceiling]]
+Ceiling (`ceil`)::
++
+--
+Rounds a number up to the nearest whole number. Liquid tries to convert the input to a number before applying the filter.
+
+[horizontal]
+Source::: Shopify
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{{ 1.2 | ceil }}
+----
+
+.Output
+[source,liquid]
+----
+2
+----
+====
+--
+[[filter__divided_by,Divided By]]
+Divided By (`divided_by`)::
++
+--
+Divides a number by another number. The result's type matches the
+divisor's: dividing by an integer floors to an integer, dividing by a
+float returns a float.
+
+
+[horizontal]
+Source::: Shopify
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{{ 16 | divided_by: 4 }}
+----
+
+.Output
+[source,liquid]
+----
+4
+----
+====
++
+====
+.Input
+[source,liquid]
+----
+{{ 20 | divided_by: 7 }}
+----
+
+.Output
+[source,liquid]
+----
+2
+----
+====
++
+====
+.Input
+[source,liquid]
+----
+{{ 20 | divided_by: 7.0 }}
+----
+
+.Output
+[source,liquid]
+----
+2.857142857142857
+----
+====
+--
+[[filter__floor,Floor]]
+Floor (`floor`)::
++
+--
+Rounds a number down to the nearest whole number. Liquid tries to convert the input to a number before applying the filter.
+
+[horizontal]
+Source::: Shopify
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{{ 1.2 | floor }}
+----
+
+.Output
+[source,liquid]
+----
+1
+----
+====
+--
+[[filter__minus,Minus (subtract)]]
+Minus (subtract) (`minus`)::
++
+--
+Subtracts a number from another number.
+
+[horizontal]
+Source::: Shopify
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{{ 4 | minus: 2 }}
+----
+
+.Output
+[source,liquid]
+----
+2
+----
+====
++
+====
+.Input
+[source,liquid]
+----
+{{ 16 | minus: 4 }}
+----
+
+.Output
+[source,liquid]
+----
+12
+----
+====
+--
+[[filter__modulo,Modulo]]
+Modulo (`modulo`)::
++
+--
+Returns the remainder of a division operation.
+
+[horizontal]
+Source::: Shopify
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{{ 3 | modulo: 2 }}
+----
+
+.Output
+[source,liquid]
+----
+1
+----
+====
++
+====
+.Input
+[source,liquid]
+----
+{{ 24 | modulo: 7 }}
+----
+
+.Output
+[source,liquid]
+----
+3
+----
+====
+--
+[[filter__plus,Plus (add)]]
+Plus (add) (`plus`)::
++
+--
+Adds a number to another number.
+
+[horizontal]
+Source::: Shopify
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{{ 4 | plus: 2 }}
+----
+
+.Output
+[source,liquid]
+----
+6
+----
+====
+--
+[[filter__round,Round]]
+Round (`round`)::
++
+--
+Rounds a number to the nearest integer, or to a given number of decimal places if an argument is passed.
+
+[horizontal]
+Source::: Shopify
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{{ 1.2 | round }}
+----
+
+.Output
+[source,liquid]
+----
+1
+----
+====
++
+====
+.Input
+[source,liquid]
+----
+{{ 2.7 | round }}
+----
+
+.Output
+[source,liquid]
+----
+3
+----
+====
++
+====
+.Input
+[source,liquid]
+----
+{{ 183.357 | round: 2 }}
+----
+
+.Output
+[source,liquid]
+----
+183.36
+----
+====
+--
+[[filter__times,Times (multiply)]]
+Times (multiply) (`times`)::
++
+--
+Multiplies a number by another number.
+
+[horizontal]
+Source::: Shopify
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{{ 3 | times: 2 }}
+----
+
+.Output
+[source,liquid]
+----
+6
+----
+====
+--
+// end::math[]
+
+
+[[string-management]]
+== String management Filters
+
+// tag::string-management[]
+[[filter__append,Append]]
+Append (`append`)::
++
+--
+Adds the specified string to the end of another string.
+
+[horizontal]
+Source::: Shopify
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{{ "/my/fancy/url" | append: ".html" }}
+----
+
+.Output
+[source,liquid]
+----
+/my/fancy/url.html
+----
+====
+--
+[[filter__lstrip,Left Strip]]
+Left Strip (`lstrip`)::
++
+--
+Removes whitespace (tabs, spaces, newlines) from the left side of a
+string. Does not affect spaces between words.
+
+
+[horizontal]
+Source::: Shopify
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{{ "   So much room   " | lstrip }}!
+----
+
+.Output
+[source,liquid]
+----
+So much room   !
+----
+====
+--
+[[filter__prepend,Prepend]]
+Prepend (`prepend`)::
++
+--
+Adds the specified string to the beginning of another string.
+
+[horizontal]
+Source::: Shopify
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{{ "apples, oranges, and bananas" | prepend: "Some fruit: " }}
+----
+
+.Output
+[source,liquid]
+----
+Some fruit: apples, oranges, and bananas
+----
+====
+--
+[[filter__truncate,Truncate]]
+Truncate (`truncate`)::
++
+--
+Shortens a string to the given number of characters. If shortened, an
+ellipsis (`...`) is appended and counts against the total; pass a
+second argument to use a different (or no) ellipsis.
+
+
+[horizontal]
+Source::: Shopify
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{{ "Ground control to Major Tom." | truncate: 20 }}
+----
+
+.Output
+[source,liquid]
+----
+Ground control to...
+----
+====
++
+====
+.Input
+[source,liquid]
+----
+{{ "Ground control to Major Tom." | truncate: 25, ", and so on" }}
+----
+
+.Output
+[source,liquid]
+----
+Ground control, and so on
+----
+====
+--
+[[filter__replace_regex,Regular Expression Replace]]
+Regular Expression Replace (`replace_regex`)::
++
+--
+Use regular expressions to match and replace text patterns.
+
+[horizontal]
+Source::: AsciiSourcerer
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{{ "hello world" | replace_regex: "world", "there" }}
+----
+
+.Output
+[source,liquid]
+----
+hello there
+----
+====
++
+====
+.Input
+[source,liquid]
+----
+{{ "one,two,three" | replace_regex: ",", "-" }}
+----
+
+.Output
+[source,liquid]
+----
+one-two-three
+----
+====
+--
+// end::string-management[]
+
+
+[[variable]]
+== Variable Filters
+
+// tag::variable[]
+[[filter__default,Default]]
+Default (`default`)::
++
+--
+Sets a fallback value for a variable that is `nil`, `false`, or empty.
+Has no effect if the input already has a value.
+
+
+[horizontal]
+Source::: Shopify
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{{ nonexistent_var | default: "fallback" }}
+----
+
+.Output
+[source,liquid]
+----
+fallback
+----
+====
+--
+// end::variable[]
+
+
+[[string-recode]]
+== String recode Filters
+
+// tag::string-recode[]
+[[filter__url_decode,URL Decode]]
+URL Decode (`url_decode`)::
++
+--
+Decodes a string that has been encoded as a URL, or by `url_encode`.
+
+[horizontal]
+Source::: Shopify
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{{ "%27Stop%21%27+said+Fred" | url_decode }}
+----
+
+.Output
+[source,liquid]
+----
+'Stop!' said Fred
+----
+====
+--
+[[filter__url_encode,URL Encode]]
+URL Encode (`url_encode`)::
++
+--
+Converts any URL-unsafe characters in a string into percent-encoded
+characters. A space becomes a `+` rather than a percent-encoded
+character.
+
+
+[horizontal]
+Source::: Shopify
+
+[vertical]
+Examples:::
++
+====
+.Input
+[source,liquid]
+----
+{{ "john@liquid.com" | url_encode }}
+----
+
+.Output
+[source,liquid]
+----
+john%40liquid.com
+----
+====
++
+====
+.Input
+[source,liquid]
+----
+{{ "Tetsuro Takara" | url_encode }}
+----
+
+.Output
+[source,liquid]
+----
+Tetsuro+Takara
+----
+====
+--
+// end::string-recode[]
+
+
+[[data-type]]
+== Data type Filters
+
+// tag::data-type[]
+[[filter__sgyml_type,SGYML Type]]
+SGYML Type (`sgyml_type`)::
++
+--
+
+
+[horizontal]
+Source::: schemagraphy
+--
+// end::data-type[]
