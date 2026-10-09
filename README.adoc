@@ -836,7 +836,7 @@ Regenerate all manifest entries with:
  bundle exec rake generate:docs
 
 These same partials are also published to the `documentation` branch, under `partials/`.
-That branch holds only generated output -- no source code -- so it can be pulled directly (e.g. via raw.githubusercontent.com) by consumers who don't install the gem.
+That branch holds only generated output (no source code) so it can be pulled directly (ex: via raw.githubusercontent.com) by consumers who don't install the gem.
 Regenerate and locally commit an update to that branch with:
 
 [.prompt]
@@ -877,6 +877,7 @@ Standard release flow differs from the general DocOps Lab conventions.
 . Update version in `lib/sourcerer/version.rb` and `README.adoc` attributes.
 
 . Test all changes using local clones of the latest released versions of these downstream gems:
+
 * link:{docopslab_src_www_url}/schemagraphy[DocOps/schemagraphy]
 * link:{docopslab_src_www_url}/lab[DocOps/lab]
 * link:{docopslab_src_www_url}/releasehx[DocOps/releasehx]
