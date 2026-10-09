@@ -2,7 +2,32 @@
 
 require 'tmpdir'
 require 'fileutils'
+require 'liquid'
 require_relative '../spec_helper'
+
+# A value that implements `empty?` with a meaning unrelated to Liquid's
+# String/Array/Hash sense of "empty" (regression coverage for
+# preserve_empty: must not treat this as missing/empty just because it
+# responds to `empty?`).
+module FakeEmptyValueSupport
+  class Value < ::Liquid::Drop
+    def empty?
+      true
+    end
+
+    def to_s
+      'fake-empty-value'
+    end
+  end
+
+  module Filter
+    def fake_empty_wrap _input
+      Value.new
+    end
+  end
+end
+
+Liquid::Template.register_filter(FakeEmptyValueSupport::Filter)
 
 RSpec.describe Sourcerer::Rendering do
   let(:tmpdir) { Dir.mktmpdir }
@@ -175,6 +200,12 @@ RSpec.describe Sourcerer::Rendering do
       liquid_template = write_file('missing.liquid', 'Hi {{ data.nope }}!')
       described_class.render_template(liquid_template, data_file, out_file, engine: 'liquid', preserve_empty: true)
       expect(File.read(out_file)).to eq('Hi !')
+    end
+
+    it 'does not preserve a non-String/Array/Hash object just because it implements empty?' do
+      liquid_template = write_file('fake-empty.liquid', '{{ data.name | fake_empty_wrap }}')
+      described_class.render_template(liquid_template, data_file, out_file, engine: 'liquid', preserve_empty: true)
+      expect(File.read(out_file)).to eq('fake-empty-value')
     end
 
     it 'preserves both missing and empty values when both options are true', :aggregate_failures do
