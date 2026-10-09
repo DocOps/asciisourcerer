@@ -184,6 +184,51 @@ RSpec.describe Sourcerer::Rendering do
         liquid_template, mixed_data_file, out_file, engine: 'liquid', preserve_missing: true, preserve_empty: true)
       expect(File.read(out_file)).to eq("{{ data.nope }}\n{{ data.blank }}")
     end
+
+    it 'does not corrupt a {% assign %} target with reconstructed source text', :aggregate_failures do
+      # Regression: {% assign %} builds its own private Liquid::Variable
+      # and renders it directly, bypassing BlockBody entirely. Only a
+      # literal top-level {{ }} should ever be reconstructed from its own
+      # source -- the assign's internal render must still see the real
+      # (nil) value, or `name` ends up holding corrupted placeholder text
+      # instead of nil.
+      liquid_template = write_file(
+        'assign.liquid', "{%- assign name = data.nope -%}\ndirect: {{ data.nope }}\nvia_assign: {{ name }}")
+      described_class.render_template(liquid_template, data_file, out_file, engine: 'liquid', preserve_missing: true)
+      expect(File.read(out_file)).to eq("direct: {{ data.nope }}\nvia_assign: {{ name }}")
+    end
+
+    it 'assigns a real nil (not a corrupted string) so later logic sees it as falsy', :aggregate_failures do
+      liquid_template = write_file(
+        'assign_if.liquid',
+        '{%- assign name = data.nope -%}{% if name %}present{% else %}absent{% endif %}')
+      described_class.render_template(liquid_template, data_file, out_file, engine: 'liquid', preserve_missing: true)
+      expect(File.read(out_file)).to eq('absent')
+    end
+
+    it 'does not corrupt a {% assign %} target with reconstructed source text under preserve_empty',
+       :aggregate_failures do
+      blank_list_data_file = write_file('blank-list-input.yml', "blank_list: []\n")
+      liquid_template = write_file(
+        'assign_empty.liquid',
+        "{%- assign tags = data.blank_list -%}\ndirect: {{ data.blank_list }}\nvia_assign: {{ tags }}")
+      described_class.render_template(
+        liquid_template, blank_list_data_file, out_file, engine: 'liquid', preserve_empty: true)
+      expect(File.read(out_file)).to eq("direct: {{ data.blank_list }}\nvia_assign: {{ tags }}")
+    end
+
+    it 'preserves a clean placeholder for a nil value reached through a filter chain in an assign',
+       :aggregate_failures do
+      # Regression, chained case: `split` on a missing value produces a
+      # real empty Array (not nil) in the assign target; indexing into it
+      # is nil and should render as its own clean source text, not leak
+      # the assign's internal expression.
+      liquid_template = write_file(
+        'assign_split.liquid',
+        '{%- assign parts = data.nope | split: "/" -%}part0: {{ parts[0] }}')
+      described_class.render_template(liquid_template, data_file, out_file, engine: 'liquid', preserve_missing: true)
+      expect(File.read(out_file)).to eq('part0: {{ parts[0] }}')
+    end
   end
 
   describe '.render_outputs' do
