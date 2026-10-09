@@ -43,6 +43,11 @@ RSpec.describe Sourcerer::Jekyll::Liquid::Tags::EmbedTag do
     expect(render_embed(markup: "'partial.liquid'", vars: { 'name' => 'World' })).to eq('Hello World')
   end
 
+  it 'raises the missing-file error (not Errno::EISDIR) for an empty quoted name', :aggregate_failures do
+    expect { render_embed(markup: '""') }.to raise_error(RuntimeError, /Embed file not found/)
+    expect { render_embed(markup: "''") }.to raise_error(RuntimeError, /Embed file not found/)
+  end
+
   it 'falls back to registers[:site].config["includes_load_paths"] when the direct register is absent' do
     write_partial('Hello {{ name }}')
     fake_site = instance_double(Jekyll::Site, config: { 'includes_load_paths' => [tmpdir] })

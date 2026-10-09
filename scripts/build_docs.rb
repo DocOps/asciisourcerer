@@ -54,6 +54,18 @@ def run! *cmd, chdir: Dir.pwd
   system(*cmd, chdir: chdir, exception: true)
 end
 
+# Runs a git command with core.hooksPath overridden for this invocation
+# only, via `git -c`. This worktree only ever holds generated output (no
+# Rakefile/Gemfile by design), so the repo's own commit hooks -- which
+# assume a full dev environment -- can't run here. A plain `git config
+# core.hooksPath ...` would write to the repository's shared config
+# (worktrees share it by default) and disable hooks repo-wide, including
+# in the main working tree -- `-c` scopes the override to this process
+# only, touching no file.
+def worktree_git *cmd, chdir:
+  run!('git', '-c', "core.hooksPath=#{File::NULL}", *cmd, chdir: chdir)
+end
+
 # Like Dir.mktmpdir, but tolerates the directory already being gone by the
 # time the block finishes (e.g. `git worktree remove` deletes it for us).
 def with_scratch_dir
@@ -74,25 +86,19 @@ def commit_to_documentation_branch publish_dir
     run!('git', 'worktree', 'add', '--detach', worktree_dir, chdir: ROOT)
 
     begin
-      # This worktree only ever holds generated output (no Rakefile/Gemfile
-      # by design), so the repo's own commit hooks -- which assume a full
-      # dev environment -- can't run here. Disable them for this worktree
-      # only; the main working tree's hooksPath is untouched.
-      run!('git', 'config', 'core.hooksPath', File::NULL, chdir: worktree_dir)
-
       checkout_args = branch_exists?(BRANCH) ? ['checkout', BRANCH] : ['checkout', '--orphan', BRANCH]
-      run!('git', *checkout_args, chdir: worktree_dir)
+      worktree_git(*checkout_args, chdir: worktree_dir)
 
       tracked = `git -C #{worktree_dir} ls-files`.split("\n")
-      run!('git', 'rm', '-rf', '--quiet', '.', chdir: worktree_dir) unless tracked.empty?
+      worktree_git('rm', '-rf', '--quiet', '.', chdir: worktree_dir) unless tracked.empty?
 
       FileUtils.cp_r(Dir.glob(File.join(publish_dir, '*')), worktree_dir)
-      run!('git', 'add', '-A', chdir: worktree_dir)
+      worktree_git('add', '-A', chdir: worktree_dir)
 
       if `git -C #{worktree_dir} status --porcelain`.strip.empty?
         puts 'No changes to publish; documentation branch already up to date.'
       else
-        run!('git', 'commit', '-m', 'docs: Regenerate Liquid filter reference docs', chdir: worktree_dir)
+        worktree_git('commit', '-m', 'docs: Regenerate Liquid filter reference docs', chdir: worktree_dir)
         puts "Committed update to local '#{BRANCH}' branch (not pushed)."
       end
     ensure

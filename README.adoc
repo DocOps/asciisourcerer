@@ -824,6 +824,8 @@ Avoid exporting helper methods as accidental public API.
 
 Some reference documentation is generated from data rather than hand-written, so it can't drift from what the code actually does.
 A manifest (`specs/data/docs-manifest.yml`) lists each generation job: a Liquid template, a YAML data source, an output path, and optional `vars` to parameterize a shared template into multiple outputs.
+Each entry also accepts the Liquid-only `preserve_missing` and `preserve_empty` booleans (both default `false`), forwarded straight through to `Sourcerer::Rendering.render_template`.
+See the API docs on `Sourcerer::Rendering.render_template` for exactly what each one preserves.
 
 For example, `specs/data/liquid-filters.yml` (the same source of truth used by the Liquid filter test suite; see <<tests>>) is rendered through `docs/templates/liquid-filters-ref.adoc.liquid` twice -- once grouped by filter category, once by filter source -- producing the partials committed at `lib/sourcerer/_docs/partials/liquid-filters-by-kind.adoc` and `liquid-filters-by-source.adoc`.
 These partials ship with the gem so downstream tools can `include::` them directly.

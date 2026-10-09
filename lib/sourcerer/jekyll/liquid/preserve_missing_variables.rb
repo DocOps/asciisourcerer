@@ -109,8 +109,11 @@ module Sourcerer
 
           private
 
+          # Only the documented value types count as "empty" -- not any
+          # arbitrary object/Drop that happens to implement `empty?` with
+          # its own, possibly unrelated, meaning.
           def empty_result? value
-            value.respond_to?(:empty?) && value.empty?
+            (value.is_a?(String) || value.is_a?(Array) || value.is_a?(Hash)) && value.empty?
           end
         end
 

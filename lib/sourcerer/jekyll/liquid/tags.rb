@@ -10,7 +10,13 @@ module Sourcerer
         class EmbedTag < ::Liquid::Tag
           # Matches an optional single- or double-quoted string, capturing the
           # inner content; falls back to the whole (trimmed) markup as a bareword.
-          PARTIAL_NAME_PATTERN = /\A(?:"([^"]*)"|'([^']*)')\z/
+          # Requires at least one character inside the quotes: an empty quoted
+          # name (`""`/`''`) would otherwise expand to the includes directory
+          # itself, pass File.exist?, and raise Errno::EISDIR from File.read
+          # instead of the intended missing-file error. Left unmatched, it
+          # falls through to the bareword branch instead, where the literal
+          # (quoted) name is looked up and not found -- reported normally.
+          PARTIAL_NAME_PATTERN = /\A(?:"([^"]+)"|'([^']+)')\z/
 
           # @param tag_name [String] The name of the tag ('embed').
           # @param markup [String] The name of the partial to embed, quoted
